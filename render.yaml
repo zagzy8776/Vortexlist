@@ -1,0 +1,12 @@
+services:
+  - type: worker
+    name: vortexlist-worker
+    runtime: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm run worker
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: WORKER_INTERVAL_MS
+        value: "60000"
