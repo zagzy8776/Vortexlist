@@ -7,7 +7,8 @@ export default function ProxiesPage() {
 }
 
 async function CategoryPage({ title, subtitle }: { title: string; subtitle: string }) {
-  const products = await getPublicProxyCatalog();
+  const catalog = await getPublicProxyCatalog();
+  const products = catalog.products;
 
   return (
     <main className="min-h-screen bg-[#07111F] px-6 py-16">
@@ -15,7 +16,7 @@ async function CategoryPage({ title, subtitle }: { title: string; subtitle: stri
         <h1 className="text-5xl font-black text-white">{title}</h1>
         <p className="mt-4 max-w-2xl text-lg text-slate-300">{subtitle}</p>
         <div className="mt-6 rounded-3xl border border-cyan-300/15 bg-cyan-300/10 p-4 text-sm font-semibold text-cyan-100">
-          Live availability is checked securely in the backend. Supplier details and internal costs are hidden from customers.
+          {catalog.status.message}
         </div>
         <section className="mt-10 grid gap-5 md:grid-cols-3">
           {products.length > 0 ? (
@@ -26,12 +27,15 @@ async function CategoryPage({ title, subtitle }: { title: string; subtitle: stri
                 <p className="mt-2 text-slate-400">{product.type}</p>
                 <p className="mt-5 text-xl font-black text-white">{product.priceLabel}</p>
                 <p className="mt-2 text-sm text-slate-400">{product.delivery}</p>
-                <span className="mt-5 inline-flex rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-200">{product.availability}</span>
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <span className="inline-flex rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-200">{product.availability}</span>
+                  <a className="rounded-full bg-cyan-400 px-4 py-2 text-xs font-black text-slate-950 hover:bg-cyan-300" href={`/proxies/${product.id}`}>View details</a>
+                </div>
               </article>
             ))
           ) : (
             <div className="glass-panel rounded-3xl p-8 text-center text-slate-300 md:col-span-3">
-              Live proxy catalog is not available right now. Please check back shortly.
+              {catalog.status.message} Please check back shortly.
             </div>
           )}
         </section>

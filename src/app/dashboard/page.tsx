@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/lib/auth";
 import { formatNairaFromKobo } from "@/lib/money";
@@ -45,16 +46,16 @@ export default async function DashboardPage() {
           ))}
         </section>
         <section className="mt-8 grid gap-5 lg:grid-cols-2">
-          <a className="glass-panel rounded-3xl p-6 transition hover:-translate-y-1 hover:border-cyan-300/40" href="/numbers">
+          <Link className="glass-panel rounded-3xl p-6 transition hover:-translate-y-1 hover:border-cyan-300/40" href="/numbers">
             <p className="text-sm font-bold text-cyan-300">Buy numbers</p>
             <h2 className="mt-3 text-2xl font-black text-white">Browse phone number access</h2>
             <p className="mt-3 text-slate-400">Search countries, compare clean prices and place orders from your wallet.</p>
-          </a>
-          <a className="glass-panel rounded-3xl p-6 transition hover:-translate-y-1 hover:border-cyan-300/40" href="/proxies">
+          </Link>
+          <Link className="glass-panel rounded-3xl p-6 transition hover:-translate-y-1 hover:border-cyan-300/40" href="/proxies">
             <p className="text-sm font-bold text-cyan-300">Buy proxies</p>
             <h2 className="mt-3 text-2xl font-black text-white">Browse proxy packages</h2>
             <p className="mt-3 text-slate-400">Choose proxy access by type, country and delivery status.</p>
-          </a>
+          </Link>
         </section>
       </div>
     </main>
