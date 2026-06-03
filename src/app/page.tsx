@@ -1,0 +1,107 @@
+import Link from "next/link";
+
+const products = [
+  {
+    title: "Global phone numbers",
+    description: "Country-based virtual numbers and SMS products with provider routing ready for 5SIM, Twilio, TigerSMS, OnlineSIM and SMS-Man.",
+    metric: "190+ countries",
+  },
+  {
+    title: "Proxy marketplace",
+    description: "Datacenter, residential, ISP and mobile proxy plans powered by Webshare, Proxy-Seller and IPRoyal adapters.",
+    metric: "Fast API delivery",
+  },
+  {
+    title: "eSIM coming soon",
+    description: "A future travel-data category with country, regional and global eSIM plans when reseller APIs are ready.",
+    metric: "Future-ready",
+  },
+];
+
+const stats = ["NGN wallet", "Paystack-ready", "Provider adapters", "Admin pricing"];
+
+export default function Home() {
+  return (
+    <div className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#1d4ed8_0,transparent_30%),radial-gradient(circle_at_top_right,#7c3aed_0,transparent_28%),#07111F]">
+      <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6">
+        <Link href="/" className="flex items-center gap-3">
+          <span className="grid size-11 place-items-center rounded-2xl bg-cyan-400 text-xl font-black text-slate-950 shadow-lg shadow-cyan-500/30">V</span>
+          <span className="text-xl font-bold tracking-tight">VortexList</span>
+        </Link>
+        <nav className="hidden items-center gap-8 text-sm text-slate-300 md:flex">
+          <Link href="/proxies" className="hover:text-white">Proxies</Link>
+          <Link href="/numbers" className="hover:text-white">Numbers</Link>
+          <Link href="/esim" className="hover:text-white">eSIM</Link>
+          <Link href="/dashboard" className="hover:text-white">Dashboard</Link>
+        </nav>
+        <div className="flex items-center gap-3">
+          <Link href="/signin" className="hidden rounded-full px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 sm:block">Sign in</Link>
+          <Link href="/signup" className="rounded-full bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-500/25 transition hover:bg-cyan-300">Start now</Link>
+        </div>
+      </header>
+
+      <main className="mx-auto w-full max-w-7xl px-6 pb-20 pt-10">
+        <section className="grid items-center gap-12 py-12 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <div className="mb-6 inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-medium text-cyan-200">
+              Built for Nigeria-first wallet deposits and global API growth
+            </div>
+            <h1 className="max-w-4xl text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
+              Buy global <span className="gradient-text">numbers, proxies</span> and future eSIM plans faster.
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
+              VortexList is your API-ready marketplace foundation: wallet deposits, smart pricing, provider adapters, country browsing, admin control and fast delivery from trusted suppliers.
+            </p>
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+              <Link href="/signup" className="rounded-full bg-blue-600 px-7 py-4 text-center font-bold text-white shadow-xl shadow-blue-900/30 transition hover:bg-blue-500">Create account</Link>
+              <Link href="/dashboard" className="rounded-full border border-white/15 px-7 py-4 text-center font-bold text-white transition hover:bg-white/10">View dashboard</Link>
+            </div>
+            <div className="mt-10 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
+              {stats.map((item) => (
+                <div key={item} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-200">{item}</div>
+              ))}
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-[2rem] p-6">
+            <div className="rounded-[1.5rem] bg-slate-950/80 p-5">
+              <div className="mb-5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-400">Wallet balance</p>
+                  <p className="text-3xl font-black text-white">₦125,400</p>
+                </div>
+                <span className="rounded-full bg-green-400/15 px-3 py-1 text-sm font-bold text-green-300">Live</span>
+              </div>
+              <div className="space-y-3">
+                {products.map((product) => (
+                  <div key={product.title} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="font-bold text-white">{product.title}</h3>
+                        <p className="mt-1 text-sm leading-6 text-slate-400">{product.description}</p>
+                      </div>
+                      <span className="whitespace-nowrap rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-200">{product.metric}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-5 md:grid-cols-3">
+          {[
+            ["Provider routing", "Webshare first, then Proxy-Seller, IPRoyal, Twilio, 5SIM, TigerSMS, OnlineSIM and SMS-Man."],
+            ["Pricing engine", "USD provider cost, NGN customer wallet, admin exchange rate, markup, fees and future VIP tiers."],
+            ["Fast browsing", "Products load from your database/cache first, not slow external APIs on every page view."],
+          ].map(([title, body]) => (
+            <div key={title} className="glass-panel rounded-3xl p-6">
+              <h2 className="text-xl font-bold text-white">{title}</h2>
+              <p className="mt-3 leading-7 text-slate-300">{body}</p>
+            </div>
+          ))}
+        </section>
+      </main>
+    </div>
+  );
+}
