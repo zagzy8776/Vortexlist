@@ -1,4 +1,5 @@
 import { getSafeProxyAvailabilityFromWebshare } from "./providers/webshare";
+import { getSafeProxySellerCatalog } from "./providers/proxy-seller";
 
 export type PublicCatalogProduct = {
   id: string;
@@ -9,6 +10,7 @@ export type PublicCatalogProduct = {
   priceLabel: string;
   availability: "Available" | "Limited" | "Unavailable";
   delivery: string;
+  orderable: boolean;
 };
 
 export function getProxyPriceKobo() {
@@ -63,6 +65,29 @@ export async function getPublicProxyCatalog(): Promise<PublicCatalogResult> {
         priceLabel: formatProxyPriceLabel(),
         availability: item.count > 3 ? "Available" : "Limited",
         delivery: "Fast secure delivery",
+        orderable: true,
+      })),
+    };
+  }
+
+  const proxySellerCatalog = await getSafeProxySellerCatalog();
+
+  if (proxySellerCatalog.countries.length > 0) {
+    return {
+      status: {
+        ok: true,
+        message: "Proxy catalog is available. Ordering is being prepared for these locations.",
+      },
+      products: proxySellerCatalog.countries.slice(0, 24).map((item) => ({
+        id: `proxy-catalog-${item.sourceId}`,
+        countryCode: item.code,
+        name: `${item.country} Proxy Access`,
+        type: "Proxy package",
+        country: item.country,
+        priceLabel: formatProxyPriceLabel(),
+        availability: "Available",
+        delivery: "Ordering setup in progress",
+        orderable: false,
       })),
     };
   }
@@ -71,7 +96,7 @@ export async function getPublicProxyCatalog(): Promise<PublicCatalogResult> {
     products: [],
     status: {
       ok: false,
-      message: liveAvailability.message,
+      message: liveAvailability.message || proxySellerCatalog.message,
     },
   };
 }

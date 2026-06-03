@@ -41,7 +41,7 @@ export default async function ProxyDetailsPage({
               <p className="mt-2 font-black text-white">{product.delivery}</p>
             </div>
           </div>
-          <ProxyOrderButton disabled={!priceConfigured || product.availability === "Unavailable"} productId={product.id} />
+          <ProxyOrderButton disabled={!priceConfigured || product.availability === "Unavailable" || !product.orderable} productId={product.id} />
           <p className="mt-3 text-center text-sm text-slate-400">Ordering uses your wallet balance and delivers access securely in your orders.</p>
         </section>
       </div>
