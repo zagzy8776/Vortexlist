@@ -1,5 +1,7 @@
 import { getPublicProxyCatalog } from "@/lib/catalog";
 
+export const dynamic = "force-dynamic";
+
 export default function ProxiesPage() {
   return <CategoryPage title="Proxy marketplace" subtitle="Datacenter, residential, ISP and mobile proxy access by country, package and use case." />;
 }
@@ -12,6 +14,9 @@ async function CategoryPage({ title, subtitle }: { title: string; subtitle: stri
       <div className="mx-auto max-w-6xl">
         <h1 className="text-5xl font-black text-white">{title}</h1>
         <p className="mt-4 max-w-2xl text-lg text-slate-300">{subtitle}</p>
+        <div className="mt-6 rounded-3xl border border-cyan-300/15 bg-cyan-300/10 p-4 text-sm font-semibold text-cyan-100">
+          Live availability is checked securely in the backend. Supplier details and internal costs are hidden from customers.
+        </div>
         <section className="mt-10 grid gap-5 md:grid-cols-3">
           {products.map((product) => (
             <article className="glass-panel rounded-3xl p-6" key={product.id}>
