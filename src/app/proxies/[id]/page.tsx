@@ -13,11 +13,20 @@ export default async function ProxyDetailsPage({
   const { id } = await params;
   const catalog = await getPublicProxyCatalog();
   const product = catalog.products.find((item) => item.id === id);
-  const priceConfigured = Boolean(getProxyPriceKobo());
 
   if (!product) {
     notFound();
   }
+
+  const priceConfigured = Boolean(getProxyPriceKobo(product));
+  const isOrderDisabled = !priceConfigured || product.availability === "Unavailable" || !product.orderable;
+  const orderUnavailableReason = !priceConfigured
+    ? "Pricing is not configured yet."
+    : !product.orderable
+      ? "This supplier catalog is only a preview right now. Live ordering is connected for Webshare-deliverable proxies only."
+      : product.availability === "Unavailable"
+        ? "This proxy location is unavailable right now."
+        : null;
 
   return (
     <main className="min-h-screen bg-[#07111F] px-6 py-16">
@@ -41,7 +50,8 @@ export default async function ProxyDetailsPage({
               <p className="mt-2 font-black text-white">{product.delivery}</p>
             </div>
           </div>
-          <ProxyOrderButton disabled={!priceConfigured || product.availability === "Unavailable" || !product.orderable} productId={product.id} />
+          {orderUnavailableReason ? <p className="mt-6 rounded-2xl bg-orange-400/10 px-4 py-3 text-sm font-semibold text-orange-100">{orderUnavailableReason}</p> : null}
+          <ProxyOrderButton disabled={isOrderDisabled} productId={product.id} />
           <p className="mt-3 text-center text-sm text-slate-400">Ordering uses your wallet balance and delivers access securely in your orders.</p>
         </section>
       </div>

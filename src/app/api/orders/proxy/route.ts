@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { getPublicProxyCatalog, getProxyPriceKobo } from "@/lib/catalog";
+import { assertProxySellerCanFundOrder, calculateProxySellerOrder, createProxySellerOrder, getProxySellerCountryIdFromProductId, getProxySellerDelivery, isProxySellerProductId } from "@/lib/providers/proxy-seller";
 import { getProxyDeliveryByCountry } from "@/lib/providers/webshare";
 import { prisma } from "@/lib/prisma";
 
@@ -9,12 +10,6 @@ export async function POST(request: Request) {
 
   if (!session?.user) {
     return NextResponse.json({ message: "Please sign in to place an order." }, { status: 401 });
-  }
-
-  const priceKobo = getProxyPriceKobo();
-
-  if (!priceKobo) {
-    return NextResponse.json({ message: "Proxy pricing is not configured yet." }, { status: 400 });
   }
 
   const body = (await request.json()) as { productId?: string };
@@ -31,10 +26,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Proxy product is not available right now." }, { status: 404 });
   }
 
-  const delivery = await getProxyDeliveryByCountry(product.countryCode);
+  if (!product.orderable || product.availability === "Unavailable") {
+    return NextResponse.json({ message: "This proxy product is not orderable right now." }, { status: 400 });
+  }
 
-  if (!delivery) {
+  const priceKobo = getProxyPriceKobo(product);
+
+  if (!priceKobo) {
+    return NextResponse.json({ message: "Proxy pricing is not configured yet." }, { status: 400 });
+  }
+
+  const proxySellerCountryId = isProxySellerProductId(product.id) ? getProxySellerCountryIdFromProductId(product.id) : null;
+  const isProxySellerOrder = Boolean(proxySellerCountryId);
+  const webshareDelivery = isProxySellerOrder ? null : await getProxyDeliveryByCountry(product.countryCode);
+
+  if (!isProxySellerOrder && !webshareDelivery) {
     return NextResponse.json({ message: "Proxy delivery is not available right now." }, { status: 400 });
+  }
+
+  if (isProxySellerOrder && !proxySellerCountryId) {
+    return NextResponse.json({ message: "Proxy supplier product is invalid." }, { status: 400 });
+  }
+
+  if (isProxySellerOrder && proxySellerCountryId) {
+    try {
+      const supplierQuote = await calculateProxySellerOrder(proxySellerCountryId);
+
+      if (!supplierQuote.total) {
+        return NextResponse.json({ message: "Proxy supplier pricing is unavailable right now." }, { status: 400 });
+      }
+
+      await assertProxySellerCanFundOrder(supplierQuote.total);
+    } catch (error) {
+      return NextResponse.json({ message: error instanceof Error ? error.message : "Proxy supplier cannot fulfill this order right now." }, { status: 400 });
+    }
   }
 
   const wallet = await prisma.wallet.findUnique({ where: { userId: session.user.id } });
@@ -65,16 +90,17 @@ export async function POST(request: Request) {
     return tx.order.create({
       data: {
         userId: session.user.id,
-        status: "FULFILLED",
+        status: isProxySellerOrder ? "FULFILLING" : "FULFILLED",
         totalKobo: priceKobo,
         providerMeta: {
+          provider: isProxySellerOrder ? "proxy-seller" : "webshare",
           product: {
             id: product.id,
             name: product.name,
             country: product.country,
             type: product.type,
           },
-          delivery,
+          delivery: webshareDelivery,
         },
       },
       select: {
@@ -82,6 +108,69 @@ export async function POST(request: Request) {
       },
     });
   });
+
+  if (isProxySellerOrder && proxySellerCountryId) {
+    try {
+      const supplierOrder = await createProxySellerOrder(proxySellerCountryId);
+      const delivery = await getProxySellerDelivery(supplierOrder.orderId!);
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: delivery.length > 0 ? "FULFILLED" : "FULFILLING",
+          providerMeta: {
+            provider: "proxy-seller",
+            supplierOrder,
+            product: {
+              id: product.id,
+              name: product.name,
+              country: product.country,
+              type: product.type,
+            },
+            delivery,
+          },
+        },
+      });
+    } catch (error) {
+      await prisma.$transaction([
+        prisma.order.update({
+          where: { id: order.id },
+          data: {
+            status: "FAILED",
+            providerMeta: {
+              provider: "proxy-seller",
+              product: {
+                id: product.id,
+                name: product.name,
+                country: product.country,
+                type: product.type,
+              },
+              error: error instanceof Error ? error.message : "Proxy supplier order failed.",
+            },
+          },
+        }),
+        prisma.wallet.update({
+          where: { id: wallet.id },
+          data: {
+            balanceKobo: {
+              increment: priceKobo,
+            },
+          },
+        }),
+        prisma.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            type: "REFUND",
+            amountKobo: priceKobo,
+            reference: order.id,
+            description: `Refund for failed proxy order: ${product.name}`,
+          },
+        }),
+      ]);
+
+      return NextResponse.json({ message: "Proxy supplier order failed. Your wallet has been refunded." }, { status: 502 });
+    }
+  }
 
   return NextResponse.json({ orderId: order.id });
 }

@@ -12,22 +12,27 @@ export function ProxyOrderButton({ productId, disabled }: { productId: string; d
     setError("");
     setLoading(true);
 
-    const response = await fetch("/api/orders/proxy", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId }),
-    });
+    try {
+      const response = await fetch("/api/orders/proxy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId }),
+      });
 
-    const data = (await response.json()) as { message?: string; orderId?: string };
-    setLoading(false);
+      const data = (await response.json()) as { message?: string; orderId?: string };
 
-    if (!response.ok || !data.orderId) {
-      setError(data.message ?? "Unable to place order.");
-      return;
+      if (!response.ok || !data.orderId) {
+        setError(data.message ?? "Unable to place order.");
+        return;
+      }
+
+      router.push("/orders");
+      router.refresh();
+    } catch {
+      setError("Network error. Please check your connection and try again.");
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/orders");
-    router.refresh();
   }
 
   return (

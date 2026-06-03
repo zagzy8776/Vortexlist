@@ -55,18 +55,36 @@ export default async function OrdersPage() {
 function OrderDelivery({ meta }: { meta: unknown }) {
   const data = meta as {
     product?: { name?: string; country?: string };
-    delivery?: { proxyHost?: string; proxyPort?: number; username?: string; password?: string };
+    delivery?: { proxyHost?: string; proxyPort?: number; httpPort?: number; socksPort?: number; username?: string; password?: string } | Array<{ proxyHost?: string; httpPort?: number; socksPort?: number; username?: string; password?: string; expiresAt?: string }>;
   } | null;
 
   if (!data?.delivery) {
     return null;
   }
 
+  if (Array.isArray(data.delivery)) {
+    return (
+      <div className="space-y-3">
+        {data.delivery.map((delivery, index) => (
+          <div className="rounded-2xl border border-cyan-300/15 bg-cyan-300/10 p-4 text-sm" key={`${delivery.proxyHost}-${index}`}>
+            <p className="font-black text-white">{data.product?.name ?? "Proxy access"}</p>
+            <p className="mt-2 text-slate-300">Host: {delivery.proxyHost}</p>
+            <p className="text-slate-300">HTTP Port: {delivery.httpPort}</p>
+            <p className="text-slate-300">SOCKS Port: {delivery.socksPort}</p>
+            <p className="text-slate-300">Username: {delivery.username}</p>
+            <p className="text-slate-300">Password: {delivery.password}</p>
+            {delivery.expiresAt ? <p className="text-slate-300">Expires: {delivery.expiresAt}</p> : null}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-2xl border border-cyan-300/15 bg-cyan-300/10 p-4 text-sm">
       <p className="font-black text-white">{data.product?.name ?? "Service access"}</p>
       <p className="mt-2 text-slate-300">Host: {data.delivery.proxyHost}</p>
-      <p className="text-slate-300">Port: {data.delivery.proxyPort}</p>
+      <p className="text-slate-300">Port: {data.delivery.proxyPort ?? data.delivery.httpPort}</p>
       <p className="text-slate-300">Username: {data.delivery.username}</p>
       <p className="text-slate-300">Password: {data.delivery.password}</p>
     </div>

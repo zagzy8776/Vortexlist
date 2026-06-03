@@ -12,21 +12,26 @@ export function WalletFundingForm() {
     setError("");
     setLoading(true);
 
-    const response = await fetch("/api/wallet/deposit/initialize", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amountNaira: Number(amount) }),
-    });
+    try {
+      const response = await fetch("/api/wallet/deposit/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amountNaira: Number(amount) }),
+      });
 
-    const data = (await response.json()) as { authorizationUrl?: string; message?: string };
+      const data = (await response.json()) as { authorizationUrl?: string; message?: string };
 
-    if (!response.ok || !data.authorizationUrl) {
-      setError(data.message ?? "Unable to start secure checkout.");
+      if (!response.ok || !data.authorizationUrl) {
+        setError(data.message ?? "Unable to start secure checkout.");
+        return;
+      }
+
+      window.location.href = data.authorizationUrl;
+    } catch {
+      setError("Network error. Please check your connection and try again.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    window.location.href = data.authorizationUrl;
   }
 
   return (
