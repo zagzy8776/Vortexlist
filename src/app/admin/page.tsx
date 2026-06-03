@@ -1,6 +1,19 @@
+import { redirect } from "next/navigation";
+import { getCurrentSession } from "@/lib/auth";
+
 const adminModules = ["Users", "Orders", "Products", "Countries", "Providers", "Pricing rules", "Wallet transactions", "Manual deposits", "API logs"];
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const session = await getCurrentSession();
+
+  if (!session?.user) {
+    redirect("/signin");
+  }
+
+  if (session.user.role !== "ADMIN") {
+    redirect("/dashboard");
+  }
+
   return (
     <main className="min-h-screen bg-[#07111F] px-6 py-8">
       <div className="mx-auto max-w-7xl">
