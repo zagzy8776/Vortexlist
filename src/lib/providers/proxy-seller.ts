@@ -17,6 +17,13 @@ type ProxySellerError = {
   field?: string;
 };
 
+export class ProxySellerPublicError extends Error {
+  constructor(message = "Proxy supply is temporarily unavailable.") {
+    super(message);
+    this.name = "ProxySellerPublicError";
+  }
+}
+
 type ProxySellerCalcResponse = {
   status?: string;
   data?: {
@@ -260,11 +267,13 @@ export async function calculateProxySellerOrder(countryId: number) {
   });
 
   if (!response.ok || response.data.status !== "success" || !response.data.data) {
-    throw new Error(getProxySellerErrorMessage(response.data.errors));
+    console.error("Proxy Seller calc failed", getProxySellerErrorMessage(response.data.errors));
+    throw new ProxySellerPublicError();
   }
 
   if (response.data.data.warning) {
-    throw new Error(response.data.data.warning);
+    console.error("Proxy Seller calc warning", response.data.data.warning);
+    throw new ProxySellerPublicError();
   }
 
   return response.data.data;
@@ -274,7 +283,8 @@ export async function getProxySellerBalanceUsd() {
   const response = await proxySellerFetch<ProxySellerBalanceResponse>("/balance/get");
 
   if (!response.ok || response.data.status !== "success") {
-    throw new Error(getProxySellerErrorMessage(response.data.errors));
+    console.error("Proxy Seller balance failed", getProxySellerErrorMessage(response.data.errors));
+    throw new ProxySellerPublicError();
   }
 
   const balance = Number(response.data.data?.summ);
@@ -286,7 +296,8 @@ export async function assertProxySellerCanFundOrder(totalUsd: number) {
   const balanceUsd = await getProxySellerBalanceUsd();
 
   if (balanceUsd < totalUsd) {
-    throw new Error("Proxy supply is temporarily unavailable.");
+    console.error("Proxy Seller balance too low", { balanceUsd, totalUsd });
+    throw new ProxySellerPublicError();
   }
 
   return balanceUsd;
@@ -306,7 +317,8 @@ export async function createProxySellerOrder(countryId: number) {
   });
 
   if (!response.ok || response.data.status !== "success" || !response.data.data?.orderId) {
-    throw new Error(getProxySellerErrorMessage(response.data.errors));
+    console.error("Proxy Seller make failed", getProxySellerErrorMessage(response.data.errors));
+    throw new ProxySellerPublicError();
   }
 
   return response.data.data;

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { getPublicProxyCatalog, getProxyPriceKobo } from "@/lib/catalog";
-import { assertProxySellerCanFundOrder, calculateProxySellerOrder, createProxySellerOrder, getProxySellerCountryIdFromProductId, getProxySellerDelivery, isProxySellerProductId } from "@/lib/providers/proxy-seller";
+import { ProxySellerPublicError, assertProxySellerCanFundOrder, calculateProxySellerOrder, createProxySellerOrder, getProxySellerCountryIdFromProductId, getProxySellerDelivery, isProxySellerProductId } from "@/lib/providers/proxy-seller";
 import { getProxyDeliveryByCountry } from "@/lib/providers/webshare";
 import { prisma } from "@/lib/prisma";
 
@@ -58,7 +58,9 @@ export async function POST(request: Request) {
 
       await assertProxySellerCanFundOrder(supplierQuote.total);
     } catch (error) {
-      return NextResponse.json({ message: error instanceof Error ? error.message : "Proxy supplier cannot fulfill this order right now." }, { status: 400 });
+      const message = error instanceof ProxySellerPublicError ? error.message : "Proxy supply is temporarily unavailable.";
+
+      return NextResponse.json({ message }, { status: 400 });
     }
   }
 
@@ -132,6 +134,8 @@ export async function POST(request: Request) {
         },
       });
     } catch (error) {
+      const publicMessage = error instanceof ProxySellerPublicError ? error.message : "Proxy supplier order failed.";
+
       await prisma.$transaction([
         prisma.order.update({
           where: { id: order.id },
@@ -145,7 +149,7 @@ export async function POST(request: Request) {
                 country: product.country,
                 type: product.type,
               },
-              error: error instanceof Error ? error.message : "Proxy supplier order failed.",
+              error: publicMessage,
             },
           },
         }),
@@ -168,7 +172,7 @@ export async function POST(request: Request) {
         }),
       ]);
 
-      return NextResponse.json({ message: "Proxy supplier order failed. Your wallet has been refunded." }, { status: 502 });
+      return NextResponse.json({ message: "Proxy supply is temporarily unavailable. Your wallet has been refunded." }, { status: 502 });
     }
   }
 
