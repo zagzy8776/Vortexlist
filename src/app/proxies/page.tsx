@@ -1,5 +1,5 @@
 export default function ProxiesPage() {
-  return <CategoryPage title="Proxy marketplace" subtitle="Datacenter, residential, ISP and mobile proxy plans with Webshare first." />;
+  return <CategoryPage title="Proxy marketplace" subtitle="Datacenter, residential, ISP and mobile proxy access by country, package and use case." />;
 }
 
 function CategoryPage({ title, subtitle }: { title: string; subtitle: string }) {

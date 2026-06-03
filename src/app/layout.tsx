@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "VortexList — Global numbers, proxies and eSIM access",
   description:
-    "A fast digital marketplace for global phone numbers, proxies, wallet deposits and future eSIM plans.",
+    "A fast digital marketplace for global phone numbers, private proxy access, secure wallet funding and future eSIM plans.",
 };
 
 export default function RootLayout({

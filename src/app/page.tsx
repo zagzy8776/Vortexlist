@@ -3,12 +3,12 @@ import Link from "next/link";
 const products = [
   {
     title: "Global phone numbers",
-    description: "Country-based virtual numbers and SMS products with provider routing ready for 5SIM, Twilio, TigerSMS, OnlineSIM and SMS-Man.",
+    description: "Browse country-based virtual numbers and SMS-ready services from one simple customer dashboard.",
     metric: "190+ countries",
   },
   {
     title: "Proxy marketplace",
-    description: "Datacenter, residential, ISP and mobile proxy plans powered by Webshare, Proxy-Seller and IPRoyal adapters.",
+    description: "Choose datacenter, residential, ISP and mobile proxy access by location, speed and use case.",
     metric: "Fast API delivery",
   },
   {
@@ -18,7 +18,7 @@ const products = [
   },
 ];
 
-const stats = ["NGN wallet", "Paystack-ready", "Provider adapters", "Admin pricing"];
+const stats = ["Secure wallet", "Fast checkout", "Global access", "Smart pricing"];
 
 export default function Home() {
   return (
@@ -44,13 +44,13 @@ export default function Home() {
         <section className="grid items-center gap-12 py-12 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <div className="mb-6 inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-medium text-cyan-200">
-              Built for Nigeria-first wallet deposits and global API growth
+              Built for secure wallet funding and global digital access
             </div>
             <h1 className="max-w-4xl text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
               Buy global <span className="gradient-text">numbers, proxies</span> and future eSIM plans faster.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-              VortexList is your API-ready marketplace foundation: wallet deposits, smart pricing, provider adapters, country browsing, admin control and fast delivery from trusted suppliers.
+              VortexList gives customers one clean place to fund their wallet, browse countries, buy numbers, order proxies and manage delivery securely.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <Link href="/signup" className="rounded-full bg-blue-600 px-7 py-4 text-center font-bold text-white shadow-xl shadow-blue-900/30 transition hover:bg-blue-500">Create account</Link>
@@ -91,9 +91,9 @@ export default function Home() {
 
         <section className="grid gap-5 md:grid-cols-3">
           {[
-            ["Provider routing", "Webshare first, then Proxy-Seller, IPRoyal, Twilio, 5SIM, TigerSMS, OnlineSIM and SMS-Man."],
-            ["Pricing engine", "USD provider cost, NGN customer wallet, admin exchange rate, markup, fees and future VIP tiers."],
-            ["Fast browsing", "Products load from your database/cache first, not slow external APIs on every page view."],
+            ["Global coverage", "Browse supported countries and product types without dealing with multiple suppliers."],
+            ["Transparent pricing", "See clean customer prices in your wallet currency before you order."],
+            ["Fast browsing", "Products load quickly from VortexList so customers are not waiting on slow external systems."],
           ].map(([title, body]) => (
             <div key={title} className="glass-panel rounded-3xl p-6">
               <h2 className="text-xl font-bold text-white">{title}</h2>
