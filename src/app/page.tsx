@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getCurrentSession } from "@/lib/auth";
+import { AppHeader } from "@/components/app-header";
 
 const products = [
   {
@@ -20,25 +22,13 @@ const products = [
 
 const stats = ["Secure wallet", "Fast checkout", "Global access", "Smart pricing"];
 
-export default function Home() {
+export default async function Home() {
+  const session = await getCurrentSession();
+  const loggedIn = Boolean(session?.user);
+
   return (
     <div className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,#1d4ed8_0,transparent_30%),radial-gradient(circle_at_top_right,#7c3aed_0,transparent_28%),#07111F]">
-      <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6">
-        <Link href="/" className="flex items-center gap-3">
-          <span className="grid size-11 place-items-center rounded-2xl bg-cyan-400 text-xl font-black text-slate-950 shadow-lg shadow-cyan-500/30">V</span>
-          <span className="text-xl font-bold tracking-tight">VortexList</span>
-        </Link>
-        <nav className="hidden items-center gap-8 text-sm text-slate-300 md:flex">
-          <Link href="/proxies" className="hover:text-white">Proxies</Link>
-          <Link href="/numbers" className="hover:text-white">Numbers</Link>
-          <Link href="/esim" className="hover:text-white">eSIM</Link>
-          <Link href="/dashboard" className="hover:text-white">Dashboard</Link>
-        </nav>
-        <div className="flex items-center gap-3">
-          <Link href="/signin" className="hidden rounded-full px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 sm:block">Sign in</Link>
-          <Link href="/signup" className="rounded-full bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-500/25 transition hover:bg-cyan-300">Start now</Link>
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="mx-auto w-full max-w-7xl px-6 pb-20 pt-10">
         <section className="grid items-center gap-12 py-12 lg:grid-cols-[1.1fr_0.9fr]">
@@ -53,7 +43,7 @@ export default function Home() {
               VortexList gives customers one clean place to fund their wallet, browse countries, buy numbers, order proxies and manage delivery securely.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-              <Link href="/signup" className="rounded-full bg-blue-600 px-7 py-4 text-center font-bold text-white shadow-xl shadow-blue-900/30 transition hover:bg-blue-500">Create account</Link>
+              <Link href={loggedIn ? "/dashboard" : "/signup"} className="rounded-full bg-blue-600 px-7 py-4 text-center font-bold text-white shadow-xl shadow-blue-900/30 transition hover:bg-blue-500">{loggedIn ? "Go to dashboard" : "Create account"}</Link>
               <Link href="/dashboard" className="rounded-full border border-white/15 px-7 py-4 text-center font-bold text-white transition hover:bg-white/10">View dashboard</Link>
             </div>
             <div className="mt-10 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">

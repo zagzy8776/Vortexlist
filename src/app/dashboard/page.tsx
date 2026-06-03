@@ -3,6 +3,7 @@ import { getCurrentSession } from "@/lib/auth";
 import { formatNairaFromKobo } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { LogoutButton } from "@/components/logout-button";
+import { DashboardNav } from "@/components/dashboard-nav";
 
 export default async function DashboardPage() {
   const session = await getCurrentSession();
@@ -33,6 +34,7 @@ export default async function DashboardPage() {
           </div>
           <LogoutButton />
         </div>
+        <DashboardNav />
         <section className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {cards.map(([title, value, body]) => (
             <div key={title} className="glass-panel rounded-3xl p-6">
