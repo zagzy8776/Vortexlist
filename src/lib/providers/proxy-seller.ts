@@ -89,6 +89,10 @@ function getProxySellerQuantity() {
   return Number.isInteger(quantity) && quantity > 0 ? quantity : 1;
 }
 
+function getProxySellerCustomTargetName() {
+  return process.env.PROXY_SELLER_IPV4_TARGET_NAME?.trim() || "General browsing";
+}
+
 function getProxySellerErrorMessage(errors?: ProxySellerError[]) {
   return errors?.map((error) => error.message).filter(Boolean).join(" ") || "Proxy supplier request failed.";
 }
@@ -247,6 +251,7 @@ export async function calculateProxySellerOrder(countryId: number) {
     countryId,
     periodId: getProxySellerPeriodId(),
     quantity: getProxySellerQuantity(),
+    customTargetName: getProxySellerCustomTargetName(),
   };
 
   const response = await proxySellerFetch<ProxySellerCalcResponse>("/order/calc", {
@@ -292,6 +297,7 @@ export async function createProxySellerOrder(countryId: number) {
     countryId,
     periodId: getProxySellerPeriodId(),
     quantity: getProxySellerQuantity(),
+    customTargetName: getProxySellerCustomTargetName(),
   };
 
   const response = await proxySellerFetch<ProxySellerMakeResponse>("/order/make", {
