@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPublicProxyCatalog } from "@/lib/catalog";
+import { getPublicProxyCatalog, getProxyPriceKobo } from "@/lib/catalog";
+import { ProxyOrderButton } from "@/components/proxy-order-button";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export default async function ProxyDetailsPage({
   const { id } = await params;
   const catalog = await getPublicProxyCatalog();
   const product = catalog.products.find((item) => item.id === id);
+  const priceConfigured = Boolean(getProxyPriceKobo());
 
   if (!product) {
     notFound();
@@ -39,10 +41,8 @@ export default async function ProxyDetailsPage({
               <p className="mt-2 font-black text-white">{product.delivery}</p>
             </div>
           </div>
-          <button className="mt-8 w-full rounded-2xl bg-cyan-400 px-5 py-4 font-black text-slate-950 opacity-70" type="button">
-            Order flow coming next
-          </button>
-          <p className="mt-3 text-center text-sm text-slate-400">Ordering will use your wallet balance and deliver access securely in your orders.</p>
+          <ProxyOrderButton disabled={!priceConfigured || product.availability === "Unavailable"} productId={product.id} />
+          <p className="mt-3 text-center text-sm text-slate-400">Ordering uses your wallet balance and delivers access securely in your orders.</p>
         </section>
       </div>
     </main>

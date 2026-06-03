@@ -26,6 +26,14 @@ export type SafeProxyAvailabilityResult = {
   }>;
 };
 
+export type SafeProxyDelivery = {
+  countryCode: string;
+  proxyHost: string;
+  proxyPort: number;
+  username: string;
+  password: string;
+};
+
 const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
 
 function countryNameFromCode(code: string) {
@@ -95,6 +103,55 @@ export async function getSafeProxyAvailabilityFromWebshare(): Promise<SafeProxyA
       message: "Proxy supply is temporarily unavailable.",
       countries: [],
     };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function getProxyDeliveryByCountry(countryCode: string): Promise<SafeProxyDelivery | null> {
+  const apiKey = process.env.WEBSHARE_API_KEY;
+
+  if (!apiKey) {
+    return null;
+  }
+
+  const code = countryCode.toUpperCase();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8_000);
+
+  try {
+    const response = await fetch("https://proxy.webshare.io/api/v2/proxy/list/?mode=direct&page=1&page_size=100", {
+      headers: {
+        Authorization: `Token ${apiKey}`,
+      },
+      cache: "no-store",
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      console.error("Proxy delivery request failed", response.status);
+      return null;
+    }
+
+    const data = (await response.json()) as WebshareProxyListResponse;
+    const proxy = (data.results ?? []).find((item) => {
+      return item.country_code?.toUpperCase() === code && item.valid !== false && item.proxy_address && item.port && item.username && item.password;
+    });
+
+    if (!proxy?.proxy_address || !proxy.port || !proxy.username || !proxy.password) {
+      return null;
+    }
+
+    return {
+      countryCode: code,
+      proxyHost: proxy.proxy_address,
+      proxyPort: proxy.port,
+      username: proxy.username,
+      password: proxy.password,
+    };
+  } catch {
+    console.error("Proxy delivery request failed");
+    return null;
   } finally {
     clearTimeout(timeout);
   }

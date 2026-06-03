@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { LogoutButton } from "@/components/logout-button";
 import { getCurrentSession } from "@/lib/auth";
+import { formatNairaFromKobo } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 
 export default async function OrdersPage() {
@@ -33,8 +34,14 @@ export default async function OrdersPage() {
             <div className="space-y-3">
               {orders.map((order) => (
                 <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4" key={order.id}>
-                  <p className="font-bold text-white">Order #{order.id.slice(0, 8)}</p>
-                  <p className="mt-1 text-sm text-slate-400">Status: {order.status}</p>
+                  <div className="flex flex-col justify-between gap-3 md:flex-row md:items-start">
+                    <div>
+                      <p className="font-bold text-white">Order #{order.id.slice(0, 8)}</p>
+                      <p className="mt-1 text-sm text-slate-400">Status: {order.status}</p>
+                      <p className="mt-1 text-sm text-slate-400">Total: {formatNairaFromKobo(order.totalKobo)}</p>
+                    </div>
+                    <OrderDelivery meta={order.providerMeta} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -42,5 +49,26 @@ export default async function OrdersPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+function OrderDelivery({ meta }: { meta: unknown }) {
+  const data = meta as {
+    product?: { name?: string; country?: string };
+    delivery?: { proxyHost?: string; proxyPort?: number; username?: string; password?: string };
+  } | null;
+
+  if (!data?.delivery) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-2xl border border-cyan-300/15 bg-cyan-300/10 p-4 text-sm">
+      <p className="font-black text-white">{data.product?.name ?? "Service access"}</p>
+      <p className="mt-2 text-slate-300">Host: {data.delivery.proxyHost}</p>
+      <p className="text-slate-300">Port: {data.delivery.proxyPort}</p>
+      <p className="text-slate-300">Username: {data.delivery.username}</p>
+      <p className="text-slate-300">Password: {data.delivery.password}</p>
+    </div>
   );
 }
