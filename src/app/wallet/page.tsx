@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { LogoutButton } from "@/components/logout-button";
+import { WalletFundingForm } from "@/components/wallet-funding-form";
 import { getCurrentSession } from "@/lib/auth";
 import { formatNairaFromKobo } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
@@ -11,6 +12,13 @@ export default async function WalletPage() {
   if (!session?.user) redirect("/signin");
 
   const wallet = await prisma.wallet.findUnique({ where: { userId: session.user.id } });
+  const transactions = wallet
+    ? await prisma.walletTransaction.findMany({
+        where: { walletId: wallet.id },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      })
+    : [];
 
   return (
     <main className="min-h-screen bg-[#07111F] px-6 py-8">
@@ -27,13 +35,28 @@ export default async function WalletPage() {
           <div className="glass-panel rounded-3xl p-6">
             <p className="text-sm font-bold text-cyan-300">Available balance</p>
             <p className="mt-4 text-5xl font-black text-white">{formatNairaFromKobo(wallet?.balanceKobo ?? 0)}</p>
-            <button className="mt-6 w-full rounded-2xl bg-cyan-400 px-5 py-4 font-black text-slate-950 opacity-70" type="button">Add funds soon</button>
-            <p className="mt-3 text-sm text-slate-400">Secure wallet funding is being connected next.</p>
+            <WalletFundingForm />
           </div>
           <div className="glass-panel rounded-3xl p-6">
             <h2 className="text-2xl font-black text-white">Recent transactions</h2>
             <p className="mt-3 text-slate-400">Your deposits, purchases and refunds will appear here.</p>
-            <div className="mt-6 rounded-2xl border border-dashed border-white/10 p-6 text-center text-slate-400">No wallet activity yet.</div>
+            {transactions.length > 0 ? (
+              <div className="mt-6 space-y-3">
+                {transactions.map((transaction) => (
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4" key={transaction.id}>
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-bold text-white">{transaction.description ?? transaction.type}</p>
+                        <p className="mt-1 text-xs text-slate-400">{transaction.createdAt.toLocaleString()}</p>
+                      </div>
+                      <p className="font-black text-cyan-200">{formatNairaFromKobo(transaction.amountKobo)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-6 rounded-2xl border border-dashed border-white/10 p-6 text-center text-slate-400">No wallet activity yet.</div>
+            )}
           </div>
         </section>
       </div>
