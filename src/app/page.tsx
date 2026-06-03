@@ -57,8 +57,8 @@ export default async function Home() {
             <div className="rounded-[1.5rem] bg-slate-950/80 p-5">
               <div className="mb-5 flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-400">Wallet balance</p>
-                  <p className="text-3xl font-black text-white">₦125,400</p>
+                  <p className="text-sm text-slate-400">Customer account</p>
+                  <p className="text-3xl font-black text-white">Wallet ready</p>
                 </div>
                 <span className="rounded-full bg-green-400/15 px-3 py-1 text-sm font-bold text-green-300">Live</span>
               </div>

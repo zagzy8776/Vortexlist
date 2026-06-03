@@ -9,16 +9,22 @@ export default async function NumbersPage() {
         <h1 className="text-5xl font-black text-white">Global phone numbers</h1>
         <p className="mt-4 max-w-2xl text-lg text-slate-300">Browse country-based phone number access with clean pricing, wallet checkout and order tracking.</p>
         <section className="mt-10 grid gap-5 md:grid-cols-3">
-          {products.map((product) => (
-            <article className="glass-panel rounded-3xl p-6" key={product.id}>
-              <p className="text-sm font-bold text-cyan-300">{product.country}</p>
-              <h2 className="mt-3 text-2xl font-black text-white">{product.name}</h2>
-              <p className="mt-2 text-slate-400">{product.type}</p>
-              <p className="mt-5 text-xl font-black text-white">{product.priceLabel}</p>
-              <p className="mt-2 text-sm text-slate-400">{product.delivery}</p>
-              <span className="mt-5 inline-flex rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-200">{product.availability}</span>
-            </article>
-          ))}
+          {products.length > 0 ? (
+            products.map((product) => (
+              <article className="glass-panel rounded-3xl p-6" key={product.id}>
+                <p className="text-sm font-bold text-cyan-300">{product.country}</p>
+                <h2 className="mt-3 text-2xl font-black text-white">{product.name}</h2>
+                <p className="mt-2 text-slate-400">{product.type}</p>
+                <p className="mt-5 text-xl font-black text-white">{product.priceLabel}</p>
+                <p className="mt-2 text-sm text-slate-400">{product.delivery}</p>
+                <span className="mt-5 inline-flex rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-200">{product.availability}</span>
+              </article>
+            ))
+          ) : (
+            <div className="glass-panel rounded-3xl p-8 text-center text-slate-300 md:col-span-3">
+              Live number catalog is not available right now. Please check back shortly.
+            </div>
+          )}
         </section>
       </div>
     </main>
