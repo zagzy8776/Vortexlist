@@ -42,6 +42,13 @@ enum DepositStatus {
   CANCELLED
 }
 
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
 model User {
   id           String              @id @default(cuid())
   name         String?
@@ -51,6 +58,7 @@ model User {
   wallet       Wallet?
   orders       Order[]
   deposits     WalletDeposit[]
+  supportTickets SupportTicket[]
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
 }
@@ -146,4 +154,16 @@ model OrderItem {
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int     @default(1)
   priceKobo Int
+}
+
+model SupportTicket {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id])
+  subject   String
+  message   String
+  status    SupportTicketStatus @default(OPEN)
+  adminNote String?
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
 }

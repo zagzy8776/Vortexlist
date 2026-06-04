@@ -1,5 +1,7 @@
 const startedAt = new Date();
 const intervalMs = Number(process.env.WORKER_INTERVAL_MS ?? 60_000);
+const workerRunUrl = process.env.WORKER_RUN_URL;
+const workerSecret = process.env.WORKER_SECRET;
 
 console.log(`[worker] VortexList worker started at ${startedAt.toISOString()}`);
 console.log(`[worker] Interval: ${intervalMs}ms`);
@@ -7,13 +9,22 @@ console.log(`[worker] Interval: ${intervalMs}ms`);
 async function runWorkerTick() {
   const now = new Date().toISOString();
 
-  // Placeholder for upcoming background jobs:
-  // - Sync Webshare products/prices
-  // - Check provider balances
-  // - Retry failed orders
-  // - Monitor provider API health
-  // - Process wallet/deposit follow-up jobs
-  console.log(`[worker] heartbeat ${now}`);
+  if (!workerRunUrl || !workerSecret) {
+    console.log(`[worker] heartbeat ${now}; WORKER_RUN_URL/WORKER_SECRET not configured`);
+    return;
+  }
+
+  const response = await fetch(workerRunUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-worker-secret": workerSecret,
+    },
+    body: JSON.stringify({ startedAt: now }),
+  });
+
+  const body = await response.text();
+  console.log(`[worker] tick ${now}; status=${response.status}; body=${body}`);
 }
 
 const timer = setInterval(() => {

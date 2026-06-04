@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { verifyWalletDeposit } from "@/lib/payments/paystack";
 import { prisma } from "@/lib/prisma";
+import { creditVerifiedWalletDeposit } from "@/lib/wallet-deposits";
 
 export async function POST(request: Request) {
   const session = await getCurrentSession();
@@ -28,46 +29,7 @@ export async function POST(request: Request) {
   }
 
   const verification = await verifyWalletDeposit(reference);
+  const result = await creditVerifiedWalletDeposit(reference, verification);
 
-  if (verification.status !== "success" || verification.amount !== deposit.amountKobo || verification.currency !== "NGN") {
-    await prisma.walletDeposit.update({
-      where: { reference },
-      data: {
-        status: "FAILED",
-        providerMeta: verification,
-      },
-    });
-
-    return NextResponse.json({ message: "Payment could not be verified." }, { status: 400 });
-  }
-
-  await prisma.$transaction([
-    prisma.walletDeposit.update({
-      where: { reference },
-      data: {
-        status: "VERIFIED",
-        verifiedAt: new Date(),
-        providerMeta: verification,
-      },
-    }),
-    prisma.wallet.update({
-      where: { id: deposit.walletId },
-      data: {
-        balanceKobo: {
-          increment: deposit.amountKobo,
-        },
-      },
-    }),
-    prisma.walletTransaction.create({
-      data: {
-        walletId: deposit.walletId,
-        type: "DEPOSIT",
-        amountKobo: deposit.amountKobo,
-        reference,
-        description: "Wallet funding",
-      },
-    }),
-  ]);
-
-  return NextResponse.json({ message: "Wallet credited successfully." });
+  return NextResponse.json({ message: result.message }, { status: result.ok ? 200 : 400 });
 }

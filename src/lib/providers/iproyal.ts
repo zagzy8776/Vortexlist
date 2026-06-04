@@ -293,6 +293,18 @@ export async function createIPRoyalOrder(input: { productId: number; productPlan
   return order;
 }
 
+export async function getIPRoyalOrder(orderId: number) {
+  const response = await ipRoyalFetch<IPRoyalOrderResponse>(`/orders/${encodeURIComponent(String(orderId))}`);
+  const order = response.data.data ?? response.data;
+
+  if (!response.ok || !order?.id) {
+    console.error("IPRoyal order refresh failed", getIPRoyalErrorMessage(response.data.errors));
+    throw new IPRoyalPublicError("Unable to refresh proxy delivery right now.");
+  }
+
+  return order;
+}
+
 export function getIPRoyalDelivery(order: IPRoyalOrder) {
   const proxies = order.proxy_data?.proxies ?? [];
 
