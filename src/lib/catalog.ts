@@ -1,6 +1,7 @@
 import { getSafeProxyAvailabilityFromWebshare } from "./providers/webshare";
 import { getSafeIPRoyalCatalog } from "./providers/iproyal";
 import { getSafeFiveSimCatalog } from "./providers/fivesim";
+import { getSafeSmsManCatalog } from "./providers/sms-man";
 import { getSafeProxySellerCatalog } from "./providers/proxy-seller";
 import { calculateSellingPriceKobo } from "./pricing";
 
@@ -262,10 +263,22 @@ export async function getPublicProxyCatalog(): Promise<PublicCatalogResult> {
 }
 
 export async function getPublicNumberCatalogResult(): Promise<PublicCatalogResult> {
-  const catalog = await getSafeFiveSimCatalog();
-  const orderable = Boolean(process.env.FIVESIM_API_KEY ?? process.env.FIVE_SIM_API_KEY ?? process.env.FIVESIM_TOKEN ?? process.env.FIVE_SIM_TOKEN);
+  const smsManOrderable = Boolean(process.env.SMS_MAN_API_KEY ?? process.env.SMSMAN_API_KEY ?? process.env.SMS_MAN_TOKEN ?? process.env.SMSMAN_TOKEN);
+  const fiveSimOrderable = Boolean(process.env.FIVESIM_API_KEY ?? process.env.FIVE_SIM_API_KEY ?? process.env.FIVESIM_TOKEN ?? process.env.FIVE_SIM_TOKEN);
+  const [smsManCatalog, fiveSimCatalog] = await Promise.all([getSafeSmsManCatalog(), getSafeFiveSimCatalog()]);
+  const smsManProducts = smsManCatalog.items.slice(0, 48).map((item) => ({
+    id: `number-smsman-${item.sourceId}`,
+    countryCode: item.countryCode,
+    name: `${item.country} ${item.service} Number`,
+    type: "SMS verification number",
+    country: item.country,
+    priceLabel: formatNumberPriceLabel({ countryCode: item.countryCode }),
+    availability: item.count > 10 ? "Available" as const : "Limited" as const,
+    delivery: smsManOrderable ? "Instant wallet checkout and SMS activation" : "Catalog preview - live delivery not connected yet",
+    orderable: smsManOrderable,
+  }));
 
-  const products = catalog.items.slice(0, 48).map((item) => ({
+  const fiveSimProducts = fiveSimCatalog.items.slice(0, 48).map((item) => ({
     id: `number-5sim-${item.sourceId}`,
     countryCode: item.countryCode,
     name: `${item.country} ${item.service} Number`,
@@ -273,19 +286,21 @@ export async function getPublicNumberCatalogResult(): Promise<PublicCatalogResul
     country: item.country,
     priceLabel: formatNumberPriceLabel({ countryCode: item.countryCode }),
     availability: item.count > 10 ? "Available" as const : "Limited" as const,
-    delivery: orderable ? "Instant wallet checkout and SMS activation" : "Catalog preview - live delivery not connected yet",
-    orderable,
+    delivery: fiveSimOrderable ? "Instant wallet checkout and SMS activation" : "Catalog preview - live delivery not connected yet",
+    orderable: fiveSimOrderable,
   }));
+  const products = [...smsManProducts, ...fiveSimProducts].slice(0, 48);
+  const orderableCount = products.filter((product) => product.orderable).length;
 
   return {
     products,
     status: {
-      ok: catalog.ok && products.some((product) => product.orderable),
+      ok: orderableCount > 0,
       message: products.length === 0
-        ? catalog.message
-        : orderable
+        ? smsManCatalog.message || fiveSimCatalog.message
+        : orderableCount > 0
           ? "Live phone number catalog is available. Choose a country and service to buy with wallet."
-          : "Phone number catalog preview is available, but live ordering is not connected. Check the 5sim API key environment variable.",
+          : "Phone number catalog preview is available, but live ordering is not connected. Check your SMS-MAN or 5sim API key environment variable.",
     },
   };
 }

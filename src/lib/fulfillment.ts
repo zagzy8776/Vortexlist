@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { FiveSimPublicError, getFiveSimDelivery, getFiveSimOrder } from "./providers/fivesim";
+import { SmsManPublicError, getSmsManDelivery, getSmsManOrder } from "./providers/sms-man";
 import { IPRoyalPublicError, getIPRoyalDelivery, getIPRoyalOrder } from "./providers/iproyal";
 import { ProxySellerPublicError, getProxySellerDelivery } from "./providers/proxy-seller";
 import { prisma } from "./prisma";
@@ -74,6 +75,32 @@ export async function processPendingFulfillments(limit = 25): Promise<Fulfillmen
         continue;
       }
 
+      if (meta?.provider === "sms-man" && meta.supplierOrder?.id) {
+        const supplierOrder = await getSmsManOrder(meta.supplierOrder.id);
+        const delivery = getSmsManDelivery(supplierOrder, { service: meta.product?.name });
+        const fulfilled = delivery.sms.length > 0;
+
+        await prisma.order.update({
+          where: { id: order.id },
+          data: {
+            status: fulfilled ? "FULFILLED" : "FULFILLING",
+            providerMeta: jsonValue({
+              provider: "sms-man",
+              supplierOrder,
+              product: meta.product,
+              delivery,
+            }),
+          },
+        });
+
+        if (fulfilled) {
+          result.fulfilled++;
+        } else {
+          result.stillPending++;
+        }
+        continue;
+      }
+
       if (meta?.provider === "proxy-seller" && meta.supplierOrder?.orderId) {
         const delivery = await getProxySellerDelivery(meta.supplierOrder.orderId);
         const fulfilled = delivery.length > 0;
@@ -125,7 +152,7 @@ export async function processPendingFulfillments(limit = 25): Promise<Fulfillmen
 
       result.stillPending++;
     } catch (error) {
-      if (error instanceof FiveSimPublicError || error instanceof ProxySellerPublicError || error instanceof IPRoyalPublicError) {
+      if (error instanceof FiveSimPublicError || error instanceof SmsManPublicError || error instanceof ProxySellerPublicError || error instanceof IPRoyalPublicError) {
         result.stillPending++;
       } else {
         result.failed++;

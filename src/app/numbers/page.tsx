@@ -41,7 +41,7 @@ export default async function NumbersPage() {
             ))
           ) : (
             <div className="glass-panel rounded-3xl p-8 text-center text-slate-300 md:col-span-3">
-              Live number ordering is not available right now. Please confirm your 5sim API key is configured in Vercel and redeploy.
+              Live number ordering is not available right now. Please confirm your SMS-MAN API key is configured in Vercel and redeploy.
             </div>
           )}
         </section>

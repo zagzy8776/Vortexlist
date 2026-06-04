@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { getNumberPriceKobo, getPublicNumberCatalog } from "@/lib/catalog";
 import { FiveSimPublicError, createFiveSimOrder, getFiveSimDelivery, getFiveSimOrderPartsFromProductId, isFiveSimProductId } from "@/lib/providers/fivesim";
+import { SmsManPublicError, createSmsManOrder, getSmsManDelivery, getSmsManOrderPartsFromProductId, isSmsManProductId } from "@/lib/providers/sms-man";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
@@ -36,8 +37,10 @@ export async function POST(request: Request) {
   }
 
   const fiveSimOrderParts = isFiveSimProductId(product.id) ? getFiveSimOrderPartsFromProductId(product.id) : null;
+  const smsManOrderParts = isSmsManProductId(product.id) ? getSmsManOrderPartsFromProductId(product.id) : null;
+  const provider = smsManOrderParts ? "sms-man" : "5sim";
 
-  if (!fiveSimOrderParts) {
+  if (!fiveSimOrderParts && !smsManOrderParts) {
     return NextResponse.json({ message: "Phone number supplier product is invalid." }, { status: 400 });
   }
 
@@ -72,7 +75,7 @@ export async function POST(request: Request) {
         status: "FULFILLING",
         totalKobo: priceKobo,
         providerMeta: {
-          provider: "5sim",
+          provider,
           product: {
             id: product.id,
             name: product.name,
@@ -88,28 +91,35 @@ export async function POST(request: Request) {
   });
 
   try {
-    const supplierOrder = await createFiveSimOrder(fiveSimOrderParts);
-    const delivery = getFiveSimDelivery(supplierOrder);
+    const orderResult = smsManOrderParts
+      ? await createSmsManOrder(smsManOrderParts).then((smsManOrder) => ({
+          supplierOrder: smsManOrder,
+          delivery: getSmsManDelivery(smsManOrder, { service: product.name }),
+        }))
+      : await createFiveSimOrder(fiveSimOrderParts!).then((fiveSimOrder) => ({
+          supplierOrder: fiveSimOrder,
+          delivery: getFiveSimDelivery(fiveSimOrder),
+        }));
 
     await prisma.order.update({
       where: { id: order.id },
       data: {
-        status: delivery.phoneNumber ? "FULFILLED" : "FULFILLING",
+        status: orderResult.delivery.phoneNumber ? "FULFILLED" : "FULFILLING",
         providerMeta: {
-          provider: "5sim",
-          supplierOrder: JSON.parse(JSON.stringify(supplierOrder)),
+          provider,
+          supplierOrder: JSON.parse(JSON.stringify(orderResult.supplierOrder)),
           product: {
             id: product.id,
             name: product.name,
             country: product.country,
             type: product.type,
           },
-          delivery: JSON.parse(JSON.stringify(delivery)),
+          delivery: JSON.parse(JSON.stringify(orderResult.delivery)),
         },
       },
     });
   } catch (error) {
-    const publicMessage = error instanceof FiveSimPublicError ? error.message : "Phone number supplier order failed.";
+    const publicMessage = error instanceof FiveSimPublicError || error instanceof SmsManPublicError ? error.message : "Phone number supplier order failed.";
 
     await prisma.$transaction([
       prisma.order.update({
@@ -117,7 +127,7 @@ export async function POST(request: Request) {
         data: {
           status: "FAILED",
           providerMeta: {
-            provider: "5sim",
+            provider,
             product: {
               id: product.id,
               name: product.name,

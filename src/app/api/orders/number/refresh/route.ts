@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { FiveSimPublicError, getFiveSimDelivery, getFiveSimOrder } from "@/lib/providers/fivesim";
+import { SmsManPublicError, getSmsManDelivery, getSmsManOrder } from "@/lib/providers/sms-man";
 import { prisma } from "@/lib/prisma";
 
 type NumberOrderMeta = {
@@ -38,30 +39,37 @@ export async function POST(request: Request) {
   const meta = order?.providerMeta as NumberOrderMeta | null;
   const supplierOrderId = meta?.supplierOrder?.id;
 
-  if (!order || meta?.provider !== "5sim" || !supplierOrderId) {
+  if (!order || !["5sim", "sms-man"].includes(meta?.provider ?? "") || !supplierOrderId) {
     return NextResponse.json({ message: "Phone number order is not refreshable." }, { status: 404 });
   }
 
   try {
-    const supplierOrder = await getFiveSimOrder(supplierOrderId);
-    const delivery = getFiveSimDelivery(supplierOrder);
+    const refreshResult = meta?.provider === "sms-man"
+      ? await getSmsManOrder(supplierOrderId).then((smsManOrder) => ({
+          supplierOrder: smsManOrder,
+          delivery: getSmsManDelivery(smsManOrder, { service: meta.product?.name }),
+        }))
+      : await getFiveSimOrder(supplierOrderId).then((fiveSimOrder) => ({
+          supplierOrder: fiveSimOrder,
+          delivery: getFiveSimDelivery(fiveSimOrder),
+        }));
 
     await prisma.order.update({
       where: { id: order.id },
       data: {
-        status: delivery.sms.length > 0 ? "FULFILLED" : order.status,
+        status: refreshResult.delivery.sms.length > 0 ? "FULFILLED" : order.status,
         providerMeta: {
-          provider: "5sim",
-          supplierOrder: JSON.parse(JSON.stringify(supplierOrder)),
+          provider: meta.provider,
+          supplierOrder: JSON.parse(JSON.stringify(refreshResult.supplierOrder)),
           product: meta.product,
-          delivery: JSON.parse(JSON.stringify(delivery)),
+          delivery: JSON.parse(JSON.stringify(refreshResult.delivery)),
         },
       },
     });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    const message = error instanceof FiveSimPublicError ? error.message : "Unable to refresh SMS delivery right now.";
+    const message = error instanceof FiveSimPublicError || error instanceof SmsManPublicError ? error.message : "Unable to refresh SMS delivery right now.";
 
     return NextResponse.json({ message }, { status: 502 });
   }
