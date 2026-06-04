@@ -8,8 +8,11 @@ export default async function NumbersPage() {
   return (
     <main className="min-h-screen bg-[#07111F] px-6 py-16">
       <div className="mx-auto max-w-6xl">
-        <h1 className="text-5xl font-black text-white">Global phone numbers</h1>
-        <p className="mt-4 max-w-2xl text-lg text-slate-300">Browse country-based phone number access with clean pricing, wallet checkout and order tracking.</p>
+        <div className="rounded-[2rem] border border-cyan-300/20 bg-cyan-300/10 p-8">
+          <p className="text-sm font-black uppercase tracking-[0.3em] text-cyan-200">Main VortexList marketplace</p>
+          <h1 className="mt-4 text-5xl font-black text-white">Global phone numbers for SMS activation</h1>
+          <p className="mt-4 max-w-3xl text-lg text-slate-300">Choose a country and service, buy with wallet balance, then track your number, expiry and SMS code from the orders page.</p>
+        </div>
         <section className="mt-10 grid gap-5 md:grid-cols-3">
           {products.length > 0 ? (
             products.map((product) => (
@@ -17,6 +20,10 @@ export default async function NumbersPage() {
                 <p className="text-sm font-bold text-cyan-300">{product.country}</p>
                 <h2 className="mt-3 text-2xl font-black text-white">{product.name}</h2>
                 <p className="mt-2 text-slate-400">{product.type}</p>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-300">
+                  <span className="rounded-xl bg-white/[0.04] px-3 py-2">Wallet checkout</span>
+                  <span className="rounded-xl bg-white/[0.04] px-3 py-2">SMS tracking</span>
+                </div>
                 <p className="mt-5 text-xl font-black text-white">{product.priceLabel}</p>
                 <p className="mt-2 text-sm text-slate-400">{product.delivery}</p>
                 <div className="mt-5 flex flex-wrap items-center gap-3">

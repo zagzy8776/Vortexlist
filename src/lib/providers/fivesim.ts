@@ -210,6 +210,26 @@ export async function createFiveSimOrder(input: { countrySlug: string; productSl
   return response.data;
 }
 
+export async function getFiveSimOrder(orderId: number) {
+  const apiKey = getFiveSimApiKey();
+
+  if (!apiKey) {
+    throw new FiveSimPublicError("Phone number ordering is not configured yet.");
+  }
+
+  const response = await fiveSimFetch<FiveSimOrder>(`/v1/user/check/${encodeURIComponent(String(orderId))}`, {
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+  });
+
+  if (!response.ok || !response.data?.id) {
+    throw new FiveSimPublicError("Unable to refresh SMS delivery right now.");
+  }
+
+  return response.data;
+}
+
 export function getFiveSimDelivery(order: FiveSimOrder): SafeFiveSimDelivery {
   return {
     supplierOrderId: order.id,

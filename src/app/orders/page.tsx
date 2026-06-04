@@ -4,6 +4,7 @@ import { LogoutButton } from "@/components/logout-button";
 import { getCurrentSession } from "@/lib/auth";
 import { formatNairaFromKobo } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
+import { RefreshNumberOrderButton } from "@/components/refresh-number-order-button";
 
 export default async function OrdersPage() {
   const session = await getCurrentSession();
@@ -40,7 +41,7 @@ export default async function OrdersPage() {
                       <p className="mt-1 text-sm text-slate-400">Status: {order.status}</p>
                       <p className="mt-1 text-sm text-slate-400">Total: {formatNairaFromKobo(order.totalKobo)}</p>
                     </div>
-                    <OrderDelivery meta={order.providerMeta} />
+                    <OrderDelivery meta={order.providerMeta} orderId={order.id} />
                   </div>
                 </div>
               ))}
@@ -52,7 +53,7 @@ export default async function OrdersPage() {
   );
 }
 
-function OrderDelivery({ meta }: { meta: unknown }) {
+function OrderDelivery({ meta, orderId }: { meta: unknown; orderId: string }) {
   const data = meta as {
     product?: { name?: string; country?: string };
     delivery?: { phoneNumber?: string; service?: string; operator?: string; status?: string; expiresAt?: string; proxyHost?: string; proxyPort?: number; httpPort?: number; socksPort?: number; username?: string; password?: string; sms?: Array<{ sender?: string; text?: string; code?: string; receivedAt?: string }> } | Array<{ proxyHost?: string; httpPort?: number; socksPort?: number; username?: string; password?: string; expiresAt?: string }>;
@@ -100,8 +101,9 @@ function OrderDelivery({ meta }: { meta: unknown }) {
             ))}
           </div>
         ) : (
-          <p className="mt-3 text-slate-400">Waiting for SMS code. Refresh this page after the message arrives.</p>
+          <p className="mt-3 text-slate-400">Waiting for SMS code. Use refresh after the message arrives.</p>
         )}
+        <RefreshNumberOrderButton orderId={orderId} />
       </div>
     );
   }

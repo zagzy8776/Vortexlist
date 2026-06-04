@@ -4,9 +4,9 @@ import { AppHeader } from "@/components/app-header";
 
 const products = [
   {
-    title: "Global phone numbers",
-    description: "Browse country-based virtual numbers and SMS-ready services from one simple customer dashboard.",
-    metric: "190+ countries",
+    title: "Phone numbers + SMS codes",
+    description: "Buy verification-ready numbers, track activation status and refresh SMS codes from your orders.",
+    metric: "Main product",
   },
   {
     title: "Proxy marketplace",
@@ -20,7 +20,7 @@ const products = [
   },
 ];
 
-const stats = ["Secure wallet", "Fast checkout", "Global access", "Smart pricing"];
+const stats = ["SMS activations", "Wallet checkout", "Global countries", "Code tracking"];
 
 export default async function Home() {
   const session = await getCurrentSession();
@@ -34,17 +34,17 @@ export default async function Home() {
         <section className="grid items-center gap-12 py-12 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <div className="mb-6 inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-medium text-cyan-200">
-              Built for secure wallet funding and global digital access
+              Built first for phone numbers, SMS activations and secure wallet checkout
             </div>
             <h1 className="max-w-4xl text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
-              Buy global <span className="gradient-text">numbers, proxies</span> and future eSIM plans faster.
+              Buy global <span className="gradient-text">phone numbers</span> and receive SMS codes faster.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-              VortexList gives customers one clean place to fund their wallet, browse countries, buy numbers, order proxies and manage delivery securely.
+              VortexList is centered on virtual numbers: fund your wallet, choose a country and service, buy instantly, then manage number delivery and SMS codes from one clean dashboard.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-              <Link href={loggedIn ? "/dashboard" : "/signup"} className="rounded-full bg-blue-600 px-7 py-4 text-center font-bold text-white shadow-xl shadow-blue-900/30 transition hover:bg-blue-500">{loggedIn ? "Go to dashboard" : "Create account"}</Link>
-              <Link href="/dashboard" className="rounded-full border border-white/15 px-7 py-4 text-center font-bold text-white transition hover:bg-white/10">View dashboard</Link>
+              <Link href={loggedIn ? "/numbers" : "/signup"} className="rounded-full bg-blue-600 px-7 py-4 text-center font-bold text-white shadow-xl shadow-blue-900/30 transition hover:bg-blue-500">{loggedIn ? "Buy numbers" : "Start buying numbers"}</Link>
+              <Link href="/numbers" className="rounded-full border border-white/15 px-7 py-4 text-center font-bold text-white transition hover:bg-white/10">Browse catalog</Link>
             </div>
             <div className="mt-10 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
               {stats.map((item) => (
@@ -57,8 +57,8 @@ export default async function Home() {
             <div className="rounded-[1.5rem] bg-slate-950/80 p-5">
               <div className="mb-5 flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-400">Customer account</p>
-                  <p className="text-3xl font-black text-white">Wallet ready</p>
+                  <p className="text-sm text-slate-400">Number activation hub</p>
+                  <p className="text-3xl font-black text-white">SMS ready</p>
                 </div>
                 <span className="rounded-full bg-green-400/15 px-3 py-1 text-sm font-bold text-green-300">Live</span>
               </div>
@@ -81,9 +81,9 @@ export default async function Home() {
 
         <section className="grid gap-5 md:grid-cols-3">
           {[
-            ["Global coverage", "Browse supported countries and product types without dealing with multiple suppliers."],
-            ["Transparent pricing", "See clean customer prices in your wallet currency before you order."],
-            ["Fast browsing", "Products load quickly from VortexList so customers are not waiting on slow external systems."],
+            ["Service-first catalog", "Pick numbers by country and app service, with simple wallet pricing before checkout."],
+            ["Activation tracking", "Purchased numbers stay in your orders with status, expiry and SMS code visibility."],
+            ["Secure supplier boundary", "Provider APIs and raw supplier details stay server-side while customers see clean delivery data."],
           ].map(([title, body]) => (
             <div key={title} className="glass-panel rounded-3xl p-6">
               <h2 className="text-xl font-bold text-white">{title}</h2>

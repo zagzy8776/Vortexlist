@@ -13,8 +13,8 @@ export async function AppHeader() {
         <span className="text-xl font-bold tracking-tight">VortexList</span>
       </Link>
       <nav className="hidden items-center gap-8 text-sm text-slate-300 md:flex">
+        <Link href="/numbers" className="font-bold text-cyan-200 hover:text-white">Numbers</Link>
         <Link href="/proxies" className="hover:text-white">Proxies</Link>
-        <Link href="/numbers" className="hover:text-white">Numbers</Link>
         <Link href="/wallet" className="hover:text-white">Wallet</Link>
         <Link href="/orders" className="hover:text-white">Orders</Link>
       </nav>
@@ -27,7 +27,7 @@ export async function AppHeader() {
         ) : (
           <>
             <Link href="/signin" className="hidden rounded-full px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 sm:block">Sign in</Link>
-            <Link href="/signup" className="rounded-full bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-500/25 transition hover:bg-cyan-300">Start now</Link>
+            <Link href="/signup" className="rounded-full bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-500/25 transition hover:bg-cyan-300">Buy numbers</Link>
           </>
         )}
       </div>
