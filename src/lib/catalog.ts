@@ -1,7 +1,6 @@
 import { getSafeProxyAvailabilityFromWebshare } from "./providers/webshare";
 import { getSafeIPRoyalCatalog } from "./providers/iproyal";
-import { getSafeFiveSimCatalog } from "./providers/fivesim";
-import { getSafeSmsManCatalog } from "./providers/sms-man";
+import { getRoutedNumberCatalog } from "./providers/number-router";
 import { getSafeProxySellerCatalog } from "./providers/proxy-seller";
 import { calculateSellingPriceKobo } from "./pricing";
 
@@ -15,6 +14,9 @@ export type PublicCatalogProduct = {
   availability: "Available" | "Limited" | "Unavailable";
   delivery: string;
   orderable: boolean;
+  service?: string;
+  stockLabel?: "High stock" | "Limited stock" | "Best route selected automatically";
+  availableCount?: number;
 };
 
 function shouldShowProxyPreviewProducts() {
@@ -263,33 +265,21 @@ export async function getPublicProxyCatalog(): Promise<PublicCatalogResult> {
 }
 
 export async function getPublicNumberCatalogResult(): Promise<PublicCatalogResult> {
-  const smsManOrderable = Boolean(process.env.SMS_MAN_API_KEY ?? process.env.SMSMAN_API_KEY ?? process.env.SMS_MAN_TOKEN ?? process.env.SMSMAN_TOKEN);
-  const fiveSimOrderable = Boolean(process.env.FIVESIM_API_KEY ?? process.env.FIVE_SIM_API_KEY ?? process.env.FIVESIM_TOKEN ?? process.env.FIVE_SIM_TOKEN);
-  const [smsManCatalog, fiveSimCatalog] = await Promise.all([getSafeSmsManCatalog(), getSafeFiveSimCatalog()]);
-  const smsManProducts = smsManCatalog.items.slice(0, 48).map((item) => ({
-    id: `number-smsman-${item.sourceId}`,
-    countryCode: item.countryCode,
-    name: `${item.country} ${item.service} Number`,
+  const routedCatalog = await getRoutedNumberCatalog();
+  const products: PublicCatalogProduct[] = routedCatalog.routes.map((route) => ({
+    id: route.id,
+    countryCode: route.countryCode,
+    name: `${route.country} ${route.service} Number`,
     type: "SMS verification number",
-    country: item.country,
-    priceLabel: formatNumberPriceLabel({ countryCode: item.countryCode }),
-    availability: item.count > 10 ? "Available" as const : "Limited" as const,
-    delivery: smsManOrderable ? "Instant wallet checkout and SMS activation" : "Catalog preview - live delivery not connected yet",
-    orderable: smsManOrderable,
+    country: route.country,
+    priceLabel: formatNumberPriceLabel({ countryCode: route.countryCode }),
+    availability: route.availableCount > 10 ? "Available" as const : "Limited" as const,
+    delivery: "Average SMS arrival: 1–5 minutes",
+    orderable: route.orderable,
+    service: route.service,
+    stockLabel: route.stockLabel,
+    availableCount: route.availableCount,
   }));
-
-  const fiveSimProducts = fiveSimCatalog.items.slice(0, 48).map((item) => ({
-    id: `number-5sim-${item.sourceId}`,
-    countryCode: item.countryCode,
-    name: `${item.country} ${item.service} Number`,
-    type: "SMS verification number",
-    country: item.country,
-    priceLabel: formatNumberPriceLabel({ countryCode: item.countryCode }),
-    availability: item.count > 10 ? "Available" as const : "Limited" as const,
-    delivery: fiveSimOrderable ? "Instant wallet checkout and SMS activation" : "Catalog preview - live delivery not connected yet",
-    orderable: fiveSimOrderable,
-  }));
-  const products = [...smsManProducts, ...fiveSimProducts].slice(0, 48);
   const orderableCount = products.filter((product) => product.orderable).length;
 
   return {
@@ -297,10 +287,10 @@ export async function getPublicNumberCatalogResult(): Promise<PublicCatalogResul
     status: {
       ok: orderableCount > 0,
       message: products.length === 0
-        ? smsManCatalog.message || fiveSimCatalog.message
+        ? routedCatalog.messages[0] ?? "Phone number catalog is temporarily unavailable."
         : orderableCount > 0
-          ? "Live phone number catalog is available. Choose a country and service to buy with wallet."
-          : "Phone number catalog preview is available, but live ordering is not connected. Check your SMS-MAN or 5sim API key environment variable.",
+          ? "Live phone number routes are available. Best supplier route is selected automatically before checkout."
+          : "Phone number catalog preview is available, but live ordering is not connected. Check provider API keys and redeploy.",
     },
   };
 }

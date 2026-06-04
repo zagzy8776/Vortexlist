@@ -1,14 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-export function RefreshNumberOrderButton({ orderId }: { orderId: string }) {
+export function RefreshNumberOrderButton({ autoRefresh = false, orderId }: { autoRefresh?: boolean; orderId: string }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function refreshOrder() {
+  const refreshOrder = useCallback(async () => {
     setError("");
     setLoading(true);
 
@@ -31,7 +31,17 @@ export function RefreshNumberOrderButton({ orderId }: { orderId: string }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [orderId, router]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = window.setInterval(() => {
+      refreshOrder();
+    }, 20_000);
+
+    return () => window.clearInterval(interval);
+  }, [autoRefresh, orderId, refreshOrder]);
 
   return (
     <div className="mt-3">
@@ -43,6 +53,7 @@ export function RefreshNumberOrderButton({ orderId }: { orderId: string }) {
       >
         {loading ? "Refreshing..." : "Refresh SMS"}
       </button>
+      {autoRefresh ? <p className="mt-2 text-[11px] font-semibold text-cyan-100">Auto-refreshing every 20 seconds while SMS is pending.</p> : null}
       {error ? <p className="mt-2 rounded-xl bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200">{error}</p> : null}
     </div>
   );

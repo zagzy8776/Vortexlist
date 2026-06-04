@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { getNumberPriceKobo, getPublicNumberCatalog } from "@/lib/catalog";
-import { FiveSimPublicError, createFiveSimOrder, getFiveSimDelivery, getFiveSimOrderPartsFromProductId, isFiveSimProductId } from "@/lib/providers/fivesim";
-import { SmsManPublicError, createSmsManOrder, getSmsManDelivery, getSmsManOrderPartsFromProductId, isSmsManProductId } from "@/lib/providers/sms-man";
+import { FiveSimPublicError } from "@/lib/providers/fivesim";
+import { createNumberRouteOrder, getNumberRouteByPublicId } from "@/lib/providers/number-router";
+import { SmsActivatePublicError } from "@/lib/providers/sms-activate";
+import { SmsManPublicError } from "@/lib/providers/sms-man";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
@@ -36,12 +38,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Phone number pricing is not configured yet." }, { status: 400 });
   }
 
-  const fiveSimOrderParts = isFiveSimProductId(product.id) ? getFiveSimOrderPartsFromProductId(product.id) : null;
-  const smsManOrderParts = isSmsManProductId(product.id) ? getSmsManOrderPartsFromProductId(product.id) : null;
-  const provider = smsManOrderParts ? "sms-man" : "5sim";
+  const numberRoute = await getNumberRouteByPublicId(product.id);
 
-  if (!fiveSimOrderParts && !smsManOrderParts) {
-    return NextResponse.json({ message: "Phone number supplier product is invalid." }, { status: 400 });
+  if (!numberRoute) {
+    return NextResponse.json({ message: "Phone number route is not available right now." }, { status: 400 });
   }
 
   const wallet = await prisma.wallet.findUnique({ where: { userId: session.user.id } });
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
         status: "FULFILLING",
         totalKobo: priceKobo,
         providerMeta: {
-          provider,
+          provider: "auto-route",
           product: {
             id: product.id,
             name: product.name,
@@ -91,35 +91,28 @@ export async function POST(request: Request) {
   });
 
   try {
-    const orderResult = smsManOrderParts
-      ? await createSmsManOrder(smsManOrderParts).then((smsManOrder) => ({
-          supplierOrder: smsManOrder,
-          delivery: getSmsManDelivery(smsManOrder, { service: product.name }),
-        }))
-      : await createFiveSimOrder(fiveSimOrderParts!).then((fiveSimOrder) => ({
-          supplierOrder: fiveSimOrder,
-          delivery: getFiveSimDelivery(fiveSimOrder),
-        }));
+    const orderResult = await createNumberRouteOrder(numberRoute);
 
     await prisma.order.update({
       where: { id: order.id },
       data: {
         status: orderResult.delivery.phoneNumber ? "FULFILLED" : "FULFILLING",
         providerMeta: {
-          provider,
+          provider: orderResult.provider,
           supplierOrder: JSON.parse(JSON.stringify(orderResult.supplierOrder)),
           product: {
             id: product.id,
             name: product.name,
             country: product.country,
             type: product.type,
+            service: numberRoute.service,
           },
           delivery: JSON.parse(JSON.stringify(orderResult.delivery)),
         },
       },
     });
   } catch (error) {
-    const publicMessage = error instanceof FiveSimPublicError || error instanceof SmsManPublicError ? error.message : "Phone number supplier order failed.";
+    const publicMessage = error instanceof FiveSimPublicError || error instanceof SmsManPublicError || error instanceof SmsActivatePublicError ? error.message : "Phone number supplier order failed.";
 
     await prisma.$transaction([
       prisma.order.update({
@@ -127,12 +120,13 @@ export async function POST(request: Request) {
         data: {
           status: "FAILED",
           providerMeta: {
-            provider,
+            provider: "auto-route",
             product: {
               id: product.id,
               name: product.name,
               country: product.country,
               type: product.type,
+              service: numberRoute.service,
             },
             error: publicMessage,
           },

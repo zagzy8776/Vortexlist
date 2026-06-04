@@ -21,6 +21,12 @@ const products = [
 ];
 
 const stats = ["SMS activations", "Wallet checkout", "Global countries", "Code tracking"];
+const trustSignals = [
+  "Automatic refund if supplier fails before number delivery",
+  "No hidden supplier names or fake stock shown to customers",
+  "Wallet checkout with order tracking and SMS refresh",
+  "Support tickets attached to your account for number issues",
+];
 
 export default async function Home() {
   const session = await getCurrentSession();
@@ -81,15 +87,24 @@ export default async function Home() {
 
         <section className="grid gap-5 md:grid-cols-3">
           {[
-            ["Service-first catalog", "Pick numbers by country and app service, with simple wallet pricing before checkout."],
+            ["Service-first catalog", "Pick numbers by app service first, then filter by country, stock level and delivery expectation."],
             ["Activation tracking", "Purchased numbers stay in your orders with status, expiry and SMS code visibility."],
-            ["Secure supplier boundary", "Provider APIs and raw supplier details stay server-side while customers see clean delivery data."],
+            ["Secure supplier boundary", "Provider APIs and raw supplier details stay server-side while customers see clean stock and delivery data."],
           ].map(([title, body]) => (
             <div key={title} className="glass-panel rounded-3xl p-6">
               <h2 className="text-xl font-bold text-white">{title}</h2>
               <p className="mt-3 leading-7 text-slate-300">{body}</p>
             </div>
           ))}
+        </section>
+        <section className="mt-6 rounded-[2rem] border border-emerald-300/15 bg-emerald-400/10 p-6">
+          <p className="text-sm font-black uppercase tracking-[0.3em] text-emerald-200">Trust-first marketplace</p>
+          <h2 className="mt-3 text-3xl font-black text-white">Transparent number buying, not raw supplier exposure.</h2>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {trustSignals.map((signal) => (
+              <div className="rounded-2xl border border-emerald-300/15 bg-slate-950/30 p-4 text-sm font-semibold text-emerald-50" key={signal}>{signal}</div>
+            ))}
+          </div>
         </section>
       </main>
     </div>

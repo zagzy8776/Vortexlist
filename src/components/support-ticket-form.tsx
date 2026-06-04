@@ -1,12 +1,13 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export function SupportTicketForm() {
   const router = useRouter();
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
+  const searchParams = useSearchParams();
+  const [subject, setSubject] = useState(searchParams.get("subject") ?? "");
+  const [message, setMessage] = useState(searchParams.get("message") ?? "");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);

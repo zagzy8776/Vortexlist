@@ -5,6 +5,22 @@ import { getCurrentSession } from "@/lib/auth";
 import { formatNairaFromKobo } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { RefreshNumberOrderButton } from "@/components/refresh-number-order-button";
+import { CopyButton } from "@/components/copy-button";
+
+function formatExpiryCountdown(expiresAt?: string) {
+  if (!expiresAt) return null;
+
+  const expiresTime = new Date(expiresAt).getTime();
+  const remainingMs = expiresTime - Date.now();
+
+  if (!Number.isFinite(expiresTime)) return null;
+  if (remainingMs <= 0) return "Expired";
+
+  const minutes = Math.floor(remainingMs / 60_000);
+  const seconds = Math.floor((remainingMs % 60_000) / 1000);
+
+  return `${minutes}m ${seconds}s remaining`;
+}
 
 export default async function OrdersPage() {
   const session = await getCurrentSession();
@@ -86,16 +102,19 @@ function OrderDelivery({ meta, orderId }: { meta: unknown; orderId: string }) {
       <div className="rounded-2xl border border-cyan-300/15 bg-cyan-300/10 p-4 text-sm">
         <p className="font-black text-white">{data.product?.name ?? "Phone number access"}</p>
         <p className="mt-2 text-slate-300">Number: {data.delivery.phoneNumber}</p>
+        <CopyButton label="Copy number" value={data.delivery.phoneNumber} />
         <p className="text-slate-300">Service: {data.delivery.service}</p>
         <p className="text-slate-300">Operator: {data.delivery.operator}</p>
         <p className="text-slate-300">Status: {data.delivery.status}</p>
         {data.delivery.expiresAt ? <p className="text-slate-300">Expires: {data.delivery.expiresAt}</p> : null}
+        {formatExpiryCountdown(data.delivery.expiresAt) ? <p className="text-slate-300">Time left: {formatExpiryCountdown(data.delivery.expiresAt)}</p> : null}
         {data.delivery.sms?.length ? (
           <div className="mt-3 rounded-xl bg-slate-950/40 p-3">
             <p className="font-bold text-white">SMS messages</p>
             {data.delivery.sms.map((sms, index) => (
               <div className="mt-2 text-slate-300" key={`${sms.receivedAt}-${index}`}>
                 <p>Code: {sms.code ?? "Pending"}</p>
+                {sms.code ? <CopyButton label="Copy code" value={sms.code} /> : null}
                 <p>Text: {sms.text}</p>
               </div>
             ))}
@@ -103,7 +122,12 @@ function OrderDelivery({ meta, orderId }: { meta: unknown; orderId: string }) {
         ) : (
           <p className="mt-3 text-slate-400">Waiting for SMS code. Use refresh after the message arrives.</p>
         )}
-        <RefreshNumberOrderButton orderId={orderId} />
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <RefreshNumberOrderButton autoRefresh={!data.delivery.sms?.length} orderId={orderId} />
+          <a className="rounded-full border border-white/10 px-4 py-2 text-xs font-black text-white hover:bg-white/10" href={`/support?subject=${encodeURIComponent(`Number order ${orderId.slice(0, 8)} needs review`)}&message=${encodeURIComponent(`Please review number order ${orderId}. The SMS code has not arrived yet.`)}`}>
+            Need help?
+          </a>
+        </div>
       </div>
     );
   }

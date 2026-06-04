@@ -43,12 +43,25 @@ export default async function NumberDetailsPage({
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
               <p className="text-xs font-bold uppercase text-slate-500">Availability</p>
-              <p className="mt-2 font-black text-white">{product.availability}</p>
+              <p className="mt-2 font-black text-white">{product.stockLabel ?? product.availability}</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
               <p className="text-xs font-bold uppercase text-slate-500">Delivery</p>
               <p className="mt-2 font-black text-white">{product.delivery}</p>
             </div>
+          </div>
+          <div className="mt-8 rounded-3xl border border-cyan-300/15 bg-cyan-300/10 p-5">
+            <h2 className="text-xl font-black text-white">How it works</h2>
+            <ol className="mt-4 grid gap-3 text-sm font-semibold text-cyan-50 sm:grid-cols-2">
+              <li className="rounded-2xl bg-slate-950/30 p-4">1. Pay securely with wallet balance.</li>
+              <li className="rounded-2xl bg-slate-950/30 p-4">2. VortexList selects the best available route.</li>
+              <li className="rounded-2xl bg-slate-950/30 p-4">3. Receive the number in your orders page.</li>
+              <li className="rounded-2xl bg-slate-950/30 p-4">4. Refresh SMS status until the code arrives.</li>
+            </ol>
+          </div>
+          <div className="mt-6 rounded-3xl border border-emerald-300/15 bg-emerald-400/10 p-5 text-sm font-semibold text-emerald-50">
+            <p className="font-black text-white">Transparent protection policy</p>
+            <p className="mt-2">If no number is delivered by the supplier, your wallet is refunded automatically. After a number is issued, SMS delivery depends on the selected app and network route; if the code does not arrive, open a support ticket from your orders with the order ID attached.</p>
           </div>
           {orderUnavailableReason ? <p className="mt-6 rounded-2xl bg-orange-400/10 px-4 py-3 text-sm font-semibold text-orange-100">{orderUnavailableReason}</p> : null}
           <NumberOrderButton disabled={isOrderDisabled} productId={product.id} />

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
-import { FiveSimPublicError, getFiveSimDelivery, getFiveSimOrder } from "@/lib/providers/fivesim";
-import { SmsManPublicError, getSmsManDelivery, getSmsManOrder } from "@/lib/providers/sms-man";
+import { FiveSimPublicError } from "@/lib/providers/fivesim";
+import { refreshNumberRouteOrder } from "@/lib/providers/number-router";
+import { SmsActivatePublicError } from "@/lib/providers/sms-activate";
+import { SmsManPublicError } from "@/lib/providers/sms-man";
 import { prisma } from "@/lib/prisma";
 
 type NumberOrderMeta = {
@@ -12,7 +14,9 @@ type NumberOrderMeta = {
     name?: string;
     country?: string;
     type?: string;
+    service?: string;
   };
+  delivery?: { phoneNumber?: string };
 };
 
 export async function POST(request: Request) {
@@ -39,20 +43,18 @@ export async function POST(request: Request) {
   const meta = order?.providerMeta as NumberOrderMeta | null;
   const supplierOrderId = meta?.supplierOrder?.id;
 
-  if (!order || !["5sim", "sms-man"].includes(meta?.provider ?? "") || !supplierOrderId) {
+  if (!order || !["5sim", "sms-man", "sms-activate"].includes(meta?.provider ?? "") || !supplierOrderId) {
     return NextResponse.json({ message: "Phone number order is not refreshable." }, { status: 404 });
   }
 
   try {
-    const refreshResult = meta?.provider === "sms-man"
-      ? await getSmsManOrder(supplierOrderId).then((smsManOrder) => ({
-          supplierOrder: smsManOrder,
-          delivery: getSmsManDelivery(smsManOrder, { service: meta.product?.name }),
-        }))
-      : await getFiveSimOrder(supplierOrderId).then((fiveSimOrder) => ({
-          supplierOrder: fiveSimOrder,
-          delivery: getFiveSimDelivery(fiveSimOrder),
-        }));
+    const refreshResult = await refreshNumberRouteOrder({
+      provider: meta.provider ?? "",
+      supplierOrderId,
+      productName: meta.product?.name,
+      service: meta.product?.service,
+      phoneNumber: meta.delivery?.phoneNumber,
+    });
 
     await prisma.order.update({
       where: { id: order.id },
@@ -69,7 +71,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    const message = error instanceof FiveSimPublicError || error instanceof SmsManPublicError ? error.message : "Unable to refresh SMS delivery right now.";
+    const message = error instanceof FiveSimPublicError || error instanceof SmsManPublicError || error instanceof SmsActivatePublicError ? error.message : "Unable to refresh SMS delivery right now.";
 
     return NextResponse.json({ message }, { status: 502 });
   }

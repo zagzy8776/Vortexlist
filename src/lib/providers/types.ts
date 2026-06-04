@@ -4,6 +4,7 @@ export type ProviderSlug =
   | "iproyal"
   | "twilio"
   | "5sim"
+  | "sms-activate"
   | "tigersms"
   | "onlinesim"
   | "sms-man";
