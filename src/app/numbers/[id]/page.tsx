@@ -1,37 +1,37 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPublicProxyCatalog, getProxyPriceKobo } from "@/lib/catalog";
-import { ProxyOrderButton } from "@/components/proxy-order-button";
+import { NumberOrderButton } from "@/components/number-order-button";
+import { getNumberPriceKobo, getPublicNumberCatalog } from "@/lib/catalog";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProxyDetailsPage({
+export default async function NumberDetailsPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const catalog = await getPublicProxyCatalog();
-  const product = catalog.products.find((item) => item.id === id);
+  const products = await getPublicNumberCatalog();
+  const product = products.find((item) => item.id === id);
 
   if (!product) {
     notFound();
   }
 
-  if (!product.orderable || product.availability === "Unavailable") {
-    notFound();
-  }
-
-  const priceConfigured = Boolean(getProxyPriceKobo(product));
-  const isOrderDisabled = !priceConfigured;
+  const priceConfigured = Boolean(getNumberPriceKobo(product));
+  const isOrderDisabled = !priceConfigured || product.availability === "Unavailable" || !product.orderable;
   const orderUnavailableReason = !priceConfigured
     ? "Pricing is not configured yet."
-    : null;
+    : !product.orderable
+      ? "This phone number option is only a preview right now. Live ordering is being connected."
+      : product.availability === "Unavailable"
+        ? "This phone number option is unavailable right now."
+        : null;
 
   return (
     <main className="min-h-screen bg-[#07111F] px-6 py-16">
       <div className="mx-auto max-w-4xl">
-        <Link className="text-sm font-bold text-cyan-300" href="/proxies">← Back to proxies</Link>
+        <Link className="text-sm font-bold text-cyan-300" href="/numbers">← Back to numbers</Link>
         <section className="glass-panel mt-6 rounded-[2rem] p-8">
           <p className="text-sm font-bold text-cyan-300">{product.country}</p>
           <h1 className="mt-3 text-4xl font-black text-white">{product.name}</h1>
@@ -51,8 +51,8 @@ export default async function ProxyDetailsPage({
             </div>
           </div>
           {orderUnavailableReason ? <p className="mt-6 rounded-2xl bg-orange-400/10 px-4 py-3 text-sm font-semibold text-orange-100">{orderUnavailableReason}</p> : null}
-          <ProxyOrderButton disabled={isOrderDisabled} productId={product.id} />
-          <p className="mt-3 text-center text-sm text-slate-400">Ordering uses your wallet balance and delivers access securely in your orders.</p>
+          <NumberOrderButton disabled={isOrderDisabled} productId={product.id} />
+          <p className="mt-3 text-center text-sm text-slate-400">Ordering uses your wallet balance and delivers the number securely in your orders.</p>
         </section>
       </div>
     </main>

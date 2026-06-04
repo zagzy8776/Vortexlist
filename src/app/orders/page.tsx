@@ -55,7 +55,7 @@ export default async function OrdersPage() {
 function OrderDelivery({ meta }: { meta: unknown }) {
   const data = meta as {
     product?: { name?: string; country?: string };
-    delivery?: { proxyHost?: string; proxyPort?: number; httpPort?: number; socksPort?: number; username?: string; password?: string } | Array<{ proxyHost?: string; httpPort?: number; socksPort?: number; username?: string; password?: string; expiresAt?: string }>;
+    delivery?: { phoneNumber?: string; service?: string; operator?: string; status?: string; expiresAt?: string; proxyHost?: string; proxyPort?: number; httpPort?: number; socksPort?: number; username?: string; password?: string; sms?: Array<{ sender?: string; text?: string; code?: string; receivedAt?: string }> } | Array<{ proxyHost?: string; httpPort?: number; socksPort?: number; username?: string; password?: string; expiresAt?: string }>;
   } | null;
 
   if (!data?.delivery) {
@@ -76,6 +76,32 @@ function OrderDelivery({ meta }: { meta: unknown }) {
             {delivery.expiresAt ? <p className="text-slate-300">Expires: {delivery.expiresAt}</p> : null}
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (data.delivery.phoneNumber) {
+    return (
+      <div className="rounded-2xl border border-cyan-300/15 bg-cyan-300/10 p-4 text-sm">
+        <p className="font-black text-white">{data.product?.name ?? "Phone number access"}</p>
+        <p className="mt-2 text-slate-300">Number: {data.delivery.phoneNumber}</p>
+        <p className="text-slate-300">Service: {data.delivery.service}</p>
+        <p className="text-slate-300">Operator: {data.delivery.operator}</p>
+        <p className="text-slate-300">Status: {data.delivery.status}</p>
+        {data.delivery.expiresAt ? <p className="text-slate-300">Expires: {data.delivery.expiresAt}</p> : null}
+        {data.delivery.sms?.length ? (
+          <div className="mt-3 rounded-xl bg-slate-950/40 p-3">
+            <p className="font-bold text-white">SMS messages</p>
+            {data.delivery.sms.map((sms, index) => (
+              <div className="mt-2 text-slate-300" key={`${sms.receivedAt}-${index}`}>
+                <p>Code: {sms.code ?? "Pending"}</p>
+                <p>Text: {sms.text}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-slate-400">Waiting for SMS code. Refresh this page after the message arrives.</p>
+        )}
       </div>
     );
   }

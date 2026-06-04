@@ -1,5 +1,7 @@
 import { getPublicNumberCatalog } from "@/lib/catalog";
 
+export const dynamic = "force-dynamic";
+
 export default async function NumbersPage() {
   const products = await getPublicNumberCatalog();
 
@@ -17,7 +19,11 @@ export default async function NumbersPage() {
                 <p className="mt-2 text-slate-400">{product.type}</p>
                 <p className="mt-5 text-xl font-black text-white">{product.priceLabel}</p>
                 <p className="mt-2 text-sm text-slate-400">{product.delivery}</p>
-                <span className="mt-5 inline-flex rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-200">{product.availability}</span>
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <span className="inline-flex rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-200">{product.availability}</span>
+                  {!product.orderable ? <span className="inline-flex rounded-full bg-orange-400/10 px-3 py-1 text-xs font-bold text-orange-200">Ordering soon</span> : null}
+                  <a className="rounded-full bg-cyan-400 px-4 py-2 text-xs font-black text-slate-950 hover:bg-cyan-300" href={`/numbers/${product.id}`}>View details</a>
+                </div>
               </article>
             ))
           ) : (
