@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/auth";
 import { getPublicProxyCatalog, getProxyPriceKobo } from "@/lib/catalog";
+import { IPRoyalPublicError, createIPRoyalOrder, getIPRoyalDelivery, getIPRoyalOrderPartsFromProductId, isIPRoyalProductId } from "@/lib/providers/iproyal";
 import { ProxySellerPublicError, assertProxySellerCanFundOrder, calculateProxySellerOrder, createProxySellerOrder, getProxySellerCountryIdFromProductId, getProxySellerDelivery, isProxySellerProductId } from "@/lib/providers/proxy-seller";
 import { getProxyDeliveryByCountry } from "@/lib/providers/webshare";
 import { prisma } from "@/lib/prisma";
@@ -38,9 +39,11 @@ export async function POST(request: Request) {
 
   const proxySellerCountryId = isProxySellerProductId(product.id) ? getProxySellerCountryIdFromProductId(product.id) : null;
   const isProxySellerOrder = Boolean(proxySellerCountryId);
-  const webshareDelivery = isProxySellerOrder ? null : await getProxyDeliveryByCountry(product.countryCode);
+  const ipRoyalOrderParts = isIPRoyalProductId(product.id) ? getIPRoyalOrderPartsFromProductId(product.id) : null;
+  const isIPRoyalOrder = Boolean(ipRoyalOrderParts);
+  const webshareDelivery = isProxySellerOrder || isIPRoyalOrder ? null : await getProxyDeliveryByCountry(product.countryCode);
 
-  if (!isProxySellerOrder && !webshareDelivery) {
+  if (!isProxySellerOrder && !isIPRoyalOrder && !webshareDelivery) {
     return NextResponse.json({ message: "Proxy delivery is not available right now." }, { status: 400 });
   }
 
@@ -62,6 +65,10 @@ export async function POST(request: Request) {
 
       return NextResponse.json({ message }, { status: 400 });
     }
+  }
+
+  if (isIPRoyalOrder && !ipRoyalOrderParts) {
+    return NextResponse.json({ message: "Proxy supplier product is invalid." }, { status: 400 });
   }
 
   const wallet = await prisma.wallet.findUnique({ where: { userId: session.user.id } });
@@ -92,10 +99,10 @@ export async function POST(request: Request) {
     return tx.order.create({
       data: {
         userId: session.user.id,
-        status: isProxySellerOrder ? "FULFILLING" : "FULFILLED",
+        status: isProxySellerOrder || isIPRoyalOrder ? "FULFILLING" : "FULFILLED",
         totalKobo: priceKobo,
         providerMeta: {
-          provider: isProxySellerOrder ? "proxy-seller" : "webshare",
+          provider: isProxySellerOrder ? "proxy-seller" : isIPRoyalOrder ? "iproyal" : "webshare",
           product: {
             id: product.id,
             name: product.name,
@@ -143,6 +150,71 @@ export async function POST(request: Request) {
             status: "FAILED",
             providerMeta: {
               provider: "proxy-seller",
+              product: {
+                id: product.id,
+                name: product.name,
+                country: product.country,
+                type: product.type,
+              },
+              error: publicMessage,
+            },
+          },
+        }),
+        prisma.wallet.update({
+          where: { id: wallet.id },
+          data: {
+            balanceKobo: {
+              increment: priceKobo,
+            },
+          },
+        }),
+        prisma.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            type: "REFUND",
+            amountKobo: priceKobo,
+            reference: order.id,
+            description: `Refund for failed proxy order: ${product.name}`,
+          },
+        }),
+      ]);
+
+      return NextResponse.json({ message: "Proxy supply is temporarily unavailable. Your wallet has been refunded." }, { status: 502 });
+    }
+  }
+
+  if (isIPRoyalOrder && ipRoyalOrderParts) {
+    try {
+      const supplierOrder = await createIPRoyalOrder(ipRoyalOrderParts);
+      const delivery = getIPRoyalDelivery(supplierOrder);
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: delivery.length > 0 ? "FULFILLED" : "FULFILLING",
+          providerMeta: {
+            provider: "iproyal",
+            supplierOrder: JSON.parse(JSON.stringify(supplierOrder)),
+            product: {
+              id: product.id,
+              name: product.name,
+              country: product.country,
+              type: product.type,
+            },
+            delivery: JSON.parse(JSON.stringify(delivery)),
+          },
+        },
+      });
+    } catch (error) {
+      const publicMessage = error instanceof IPRoyalPublicError ? error.message : "Proxy supplier order failed.";
+
+      await prisma.$transaction([
+        prisma.order.update({
+          where: { id: order.id },
+          data: {
+            status: "FAILED",
+            providerMeta: {
+              provider: "iproyal",
               product: {
                 id: product.id,
                 name: product.name,

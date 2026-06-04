@@ -23,7 +23,7 @@ export default async function ProxyDetailsPage({
   const orderUnavailableReason = !priceConfigured
     ? "Pricing is not configured yet."
     : !product.orderable
-      ? "This supplier catalog is only a preview right now. Live ordering is connected for Webshare-deliverable proxies only."
+      ? "This proxy option is only a preview right now. Live ordering is connected for automatically deliverable proxies only."
       : product.availability === "Unavailable"
         ? "This proxy location is unavailable right now."
         : null;
