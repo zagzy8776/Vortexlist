@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { getPublicNumberCatalog } from "@/lib/catalog";
+import { getPublicNumberCatalogResult } from "@/lib/catalog";
 
 export async function GET() {
-  const products = await getPublicNumberCatalog();
+  const catalog = await getPublicNumberCatalogResult();
 
-  return NextResponse.json({ products });
+  return NextResponse.json(catalog);
 }

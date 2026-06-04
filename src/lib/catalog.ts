@@ -261,11 +261,11 @@ export async function getPublicProxyCatalog(): Promise<PublicCatalogResult> {
   };
 }
 
-export async function getPublicNumberCatalog(): Promise<PublicCatalogProduct[]> {
+export async function getPublicNumberCatalogResult(): Promise<PublicCatalogResult> {
   const catalog = await getSafeFiveSimCatalog();
-  const orderable = Boolean(process.env.FIVESIM_API_KEY);
+  const orderable = Boolean(process.env.FIVESIM_API_KEY ?? process.env.FIVE_SIM_API_KEY ?? process.env.FIVESIM_TOKEN ?? process.env.FIVE_SIM_TOKEN);
 
-  return catalog.items.slice(0, 48).map((item) => ({
+  const products = catalog.items.slice(0, 48).map((item) => ({
     id: `number-5sim-${item.sourceId}`,
     countryCode: item.countryCode,
     name: `${item.country} ${item.service} Number`,
@@ -276,4 +276,22 @@ export async function getPublicNumberCatalog(): Promise<PublicCatalogProduct[]> 
     delivery: orderable ? "Instant wallet checkout and SMS activation" : "Catalog preview - live delivery not connected yet",
     orderable,
   }));
+
+  return {
+    products,
+    status: {
+      ok: catalog.ok && products.some((product) => product.orderable),
+      message: products.length === 0
+        ? catalog.message
+        : orderable
+          ? "Live phone number catalog is available. Choose a country and service to buy with wallet."
+          : "Phone number catalog preview is available, but live ordering is not connected. Check the 5sim API key environment variable.",
+    },
+  };
+}
+
+export async function getPublicNumberCatalog(): Promise<PublicCatalogProduct[]> {
+  const catalog = await getPublicNumberCatalogResult();
+
+  return catalog.products;
 }

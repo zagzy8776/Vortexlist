@@ -18,15 +18,15 @@ export default async function NumberDetailsPage({
     notFound();
   }
 
+  if (!product.orderable || product.availability === "Unavailable") {
+    notFound();
+  }
+
   const priceConfigured = Boolean(getNumberPriceKobo(product));
-  const isOrderDisabled = !priceConfigured || product.availability === "Unavailable" || !product.orderable;
+  const isOrderDisabled = !priceConfigured;
   const orderUnavailableReason = !priceConfigured
     ? "Pricing is not configured yet."
-    : !product.orderable
-      ? "This phone number option is only a preview right now. Live ordering is being connected."
-      : product.availability === "Unavailable"
-        ? "This phone number option is unavailable right now."
-        : null;
+    : null;
 
   return (
     <main className="min-h-screen bg-[#07111F] px-6 py-16">

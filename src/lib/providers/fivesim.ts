@@ -58,8 +58,8 @@ export class FiveSimPublicError extends Error {
 
 const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
 
-const defaultCountries = ["usa", "england", "germany", "france", "nigeria"];
-const defaultServices = ["telegram", "whatsapp", "google", "instagram", "facebook"];
+const defaultCountries = ["usa", "england", "germany", "france", "nigeria", "canada", "india", "spain", "poland", "brazil"];
+const defaultServices = ["telegram", "whatsapp", "google", "instagram", "facebook", "twitter", "tiktok", "discord"];
 
 const fiveSimCountryCodes: Record<string, string> = {
   australia: "AU",
@@ -78,14 +78,35 @@ const fiveSimCountryCodes: Record<string, string> = {
   usa: "US",
 };
 
+const fiveSimCountrySlugsByCode: Record<string, string> = Object.fromEntries(
+  Object.entries(fiveSimCountryCodes).map(([slug, code]) => [code, slug]),
+);
+
+const countryAliases: Record<string, string> = {
+  uk: "england",
+  gb: "england",
+  great_britain: "england",
+  united_kingdom: "england",
+  us: "usa",
+  united_states: "usa",
+  united_states_of_america: "usa",
+};
+
 function getFiveSimApiKey() {
-  return process.env.FIVESIM_API_KEY;
+  return process.env.FIVESIM_API_KEY ?? process.env.FIVE_SIM_API_KEY ?? process.env.FIVESIM_TOKEN ?? process.env.FIVE_SIM_TOKEN;
 }
 
 function parseCsv(value: string | undefined, fallback: string[]) {
   const items = value?.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean) ?? [];
 
   return items.length > 0 ? items : fallback;
+}
+
+function normalizeCountrySlug(value: string) {
+  const normalized = value.trim().toLowerCase().replace(/[^a-z]+/g, "_").replace(/^_|_$/g, "");
+  const code = normalized.toUpperCase();
+
+  return countryAliases[normalized] ?? fiveSimCountrySlugsByCode[code] ?? normalized;
 }
 
 function titleCase(value: string) {
@@ -120,7 +141,7 @@ async function fiveSimFetch<T>(path: string, init?: RequestInit): Promise<{ ok: 
 }
 
 export async function getSafeFiveSimCatalog() {
-  const countries = parseCsv(process.env.NUMBER_COUNTRIES, defaultCountries);
+  const countries = parseCsv(process.env.NUMBER_COUNTRIES ?? process.env.FIVESIM_COUNTRIES ?? process.env.FIVE_SIM_COUNTRIES, defaultCountries).map(normalizeCountrySlug);
   const services = new Set(parseCsv(process.env.NUMBER_SERVICES, defaultServices));
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10_000);
